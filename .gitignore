@@ -3,4 +3,7 @@ venv/
 __pycache__/
 server.log
 wa_error.png
+browser_error.png
 reply.mp3
+contacts.json
+email_contacts.json

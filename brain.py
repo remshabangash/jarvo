@@ -39,8 +39,16 @@ natural phrasing and map it to the closest capability:
 - IMPORTANT: You CAN take screenshots and record the screen — the tools
   take_screenshot / start_recording / stop_recording are installed and
   working. NEVER say you cannot capture the screen; just call the tool.
+- The user wants to open a website in the browser AND THEN control it with
+  follow-up commands (click something on it, scroll, go back, type into a
+  field, read the page aloud, switch/close tabs, zoom, refresh) → use
+  browser_action (action='open') first, then browser_action with the
+  appropriate follow-up action — this is a DIFFERENT, controllable browser
+  window from open_app, and stays open across turns so the user never
+  repeats the full request.
 - The user wants something opened/launched/started on the computer or web
-  (an app, program, or website, phrased any way) → open_app with the name.
+  (an app, program, or website, phrased any way) with NO expectation of
+  further clicking on it → open_app with the name.
 - The user wants a WhatsApp message sent to a person (phrased any way:
   "bolo", "likho", "bhejo", "message", "text", "tell them"...) → send_whatsapp.
   A person's name is NEVER a valid app_name.
@@ -73,6 +81,15 @@ EMAIL rules:
 - "speak" must be a confirmation QUESTION with recipient (and subject/body if
   known), in the user's language. Example: "Remsha ko 'meeting 5 baje' email
   bhej doon?" / "Send the email to Remsha?"
+
+BROWSER rules:
+- action='type' needs BOTH "target" (a hint like 'search', 'email', or empty
+  if there's one obvious field) AND "extra" (the exact text to type).
+- action='switch_tab' needs "target" as a zero-based index string: first tab
+  = "0", second tab = "1", etc. Convert ordinal words yourself.
+- action='get_text'/'get_title'/'get_link_url' read live page content —
+  your "speak" field is IGNORED for these; the actual result is spoken
+  instead, so just describe the intent briefly in "speak".
 
 Be quick and natural — this is a live voice conversation."""
 
@@ -204,6 +221,74 @@ TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "browser_action",
+            "description": (
+                "Control a live, already-open browser window for follow-up "
+                "actions on a website — use when the user says things like "
+                "'click on X', 'is par click karo', 'scroll down/up', "
+                "'neeche/upar scroll karo', 'go back', 'peeche jao', 'refresh karo', "
+                "'is page par kya likha hai batao' (read page text), "
+                "'search box mein X likho' (type into a field), 'enter dabao', "
+                "'naya tab kholo', 'pehli/doosri tab par jao' (switch tab, 0-based index), "
+                "'ye tab band karo', 'zoom karo'/'zoom out karo', 'ye kaunsa page hai' "
+                "(page title), 'ye link kahan jata hai' (get a link's URL without "
+                "clicking it), or 'open <site> in the browser' as a first step before "
+                "clicking things on it. This keeps ONE browser open across turns so the "
+                "user never has to repeat the whole request — each new voice command "
+                "just acts on the SAME page."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "action": {
+                        "type": "string",
+                        "enum": [
+                            "open", "click", "scroll_down", "scroll_up", "back",
+                            "refresh", "type", "press_enter", "get_text", "get_title",
+                            "get_link_url", "new_tab", "switch_tab", "close_tab",
+                            "zoom_in", "zoom_out", "reset_zoom",
+                        ],
+                        "description": (
+                            "open: navigate to a URL/search term. click: click an element by "
+                            "its visible text. scroll_down/scroll_up: scroll the page. "
+                            "back: previous page. refresh: reload current page. "
+                            "type: type text into a field matched by target (use 'extra' for "
+                            "the text to type). press_enter: submit the focused field. "
+                            "get_text: read the page's visible text aloud. get_title: read the "
+                            "page/tab title aloud. get_link_url: return a link's destination "
+                            "without clicking (target = link's visible text). new_tab: open a "
+                            "new tab (target = optional URL/search term to load in it). "
+                            "switch_tab: switch to tab number (target = zero-based index as a "
+                            "string, e.g. '0' for first tab, '1' for second). close_tab: close "
+                            "the current tab. zoom_in/zoom_out: adjust page zoom by one step. "
+                            "reset_zoom: reset zoom to 100%."
+                        ),
+                    },
+                    "target": {
+                        "type": "string",
+                        "description": (
+                            "For 'open': a URL or search term. For 'click'/'get_link_url': the "
+                            "visible text of the link/button. For 'type': the field's "
+                            "placeholder/name/label hint (empty string is OK if there's an "
+                            "obvious single field, e.g. a search box). For 'new_tab': optional "
+                            "URL/search term. For 'switch_tab': the zero-based tab index as a "
+                            "string. Empty for scroll/back/refresh/press_enter/get_text/"
+                            "get_title/close_tab/zoom_in/zoom_out/reset_zoom."
+                        ),
+                    },
+                    "extra": {
+                        "type": "string",
+                        "description": "ONLY used with action='type' — the exact text to type into the field. Empty for all other actions.",
+                    },
+                    "speak": {"type": "string", "description": "Short spoken confirmation in the USER'S language"},
+                },
+                "required": ["action", "target", "speak"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "general_reply",
             "description": "Reply conversationally. Use for greetings, questions, chat, or anything that is not a task.",
             "parameters": {
@@ -232,8 +317,6 @@ _ASK_PHRASES = {
     "what should i write", "kya message bhejna hai", "kya bhejna hai",
 }
 
-# "X ko <text> bhejo/bol do" — LLM sometimes returns an empty message even
-# when the text was clearly spoken. This deterministic extraction fixes it.
 _MSG_VERBS = (
     r"(?:bol\s*do|bolo|bhejo|bhej\s*do|likh\s*do|likho|send\s*karo|send|"
     r"text\s*karo|message\s*karo|bata\s*do|batao|"
@@ -243,8 +326,6 @@ _GENERIC_WORDS = {"message", "msg", "text", "پیغام", "whatsapp message"}
 
 
 def _extract_message(user_text: str, contact: str) -> str | None:
-    """Pull the message text out of 'X ko <text> bhejo' style utterances.
-    Returns None when nothing sendable was said."""
     t = (user_text or "").strip().strip(".!")
     m = re.match(
         rf"^(?P<c>.+?)\s*(?:ko|کو)\s+(?P<rest>.+)$", t, re.IGNORECASE
@@ -254,7 +335,7 @@ def _extract_message(user_text: str, contact: str) -> str | None:
     said_contact = m.group("c").strip().lower()
     heard_contact = (contact or "").strip().lower()
     if heard_contact and heard_contact not in said_contact and said_contact not in heard_contact:
-        return None  # different person mentioned — don't guess
+        return None
     rest = m.group("rest").strip()
     rest = re.sub(rf"\s*{_MSG_VERBS}\s*$", "", rest, flags=re.IGNORECASE).strip()
     rest = rest.strip("'\"۔?")
@@ -274,8 +355,6 @@ def set_pre_speech(fn):
 
 
 def _known_contacts_line() -> str:
-    """'Asif, Ali Zaib, ...' from contacts.json — injected so the LLM can
-    match misheard names to real contacts itself (no hardcoded aliases)."""
     try:
         from whatsapp_bot import _load_contacts
         names = [n for n, v in _load_contacts().items()]
@@ -289,10 +368,6 @@ def _is_rate_limit(e: Exception) -> bool:
 
 
 def _complete(messages, **kwargs):
-    """Single chat-completion attempt. Rate-limit errors are raised
-    immediately (no sleep) so the caller can switch to a different model
-    right away — that's far faster than waiting out a 429 on a model
-    that's still going to be rate-limited a few seconds later."""
     try:
         return _client.chat.completions.create(
             messages=messages,
@@ -302,7 +377,6 @@ def _complete(messages, **kwargs):
             **kwargs,
         )
     except TypeError:
-        # reasoning_effort unsupported
         return _client.chat.completions.create(
             messages=messages,
             temperature=0.3,
@@ -311,23 +385,15 @@ def _complete(messages, **kwargs):
         )
 
 
-# Screen-capture tools: replies are built in CODE (deterministic) so the
-# language always matches the user, no matter what the LLM puts in "speak".
 _SCREEN_TOOLS = {"take_screenshot", "start_recording", "stop_recording"}
 
-
-# Roman-Urdu markers (Roman script me bhi Urdu detect ho sake)
 _UR_HINTS = {"lo", "le", "karo", "kar", "do", "dein", "diya", "di", "liya", "li",
              "meri", "mera", "mere", "ki", "ka", "ke", "se", "ko", "band", "shuru",
              "wala", "wali"}
-# Strong English function words
 _EN_HINTS = {"take", "the", "an", "my", "can", "you", "of", "please", "capture"}
 
 
 def _script_of(text: str) -> str:
-    """'ur' for Urdu-script or Roman-Urdu input, 'en' for English.
-    Code-switched Roman Urdu ("screenshot lo") -> ur; pure English phrasing
-    ("take a screenshot") -> en."""
     t = (text or "").lower()
     for ch in t:
         if 0x0600 <= ord(ch) <= 0x06FF:
@@ -340,16 +406,10 @@ def _script_of(text: str) -> str:
     return "en"
 
 
-# ---- Capture-intent safety net ----
-# The LLM occasionally refuses capture requests with a conversational reply
-# instead of calling the tool. When the utterance is UNAMBIGUOUSLY a capture
-# command, we detect it deterministically and force the tool — no refusals.
 _CAPTURE_TOOL = {"screenshot": "take_screenshot", "start": "start_recording", "stop": "stop_recording"}
 
 
 def _capture_intent(text: str) -> str | None:
-    """'screenshot' | 'start' | 'stop' | None — only for unambiguous requests.
-    Anything mentioning messaging/contacts is left to the LLM."""
     t = (text or "").lower()
     if not t or "whatsapp" in t or "bhej" in t or "send" in t:
         return None
@@ -375,9 +435,6 @@ def _force_capture(kind: str, user_text: str) -> str:
 
 
 def _screen_reply(name: str, args: dict, user_text: str) -> str:
-    """Run a screen tool DIRECTLY (raw executor result — not the LLM's speak)
-    and build a deterministic, language-correct spoken reply.
-    For stop_recording the file PATH is never spoken — only the duration."""
     if _executor is None:
         return "Screen tools available nahi hain."
     raw = _executor(name, args) or ""
@@ -429,8 +486,6 @@ def _execute_and_reply(name: str, args: dict) -> str:
 
 
 def _pending_addendum() -> str:
-    """Dynamic system context that lets the LLM resolve ANY phrased
-    confirmation/correction/cancellation for the staged send."""
     if _pending_whatsapp.get("kind") == "email":
         to = _pending_whatsapp.get("to", "")
         subject = _pending_whatsapp.get("subject") or ""
@@ -469,13 +524,6 @@ def _stage_and_confirm(contact: str, message: str | None, question: str | None) 
     _pending_whatsapp.clear()
     _pending_whatsapp.update({"contact": contact, "message": message})
     if message:
-        # Trust the LLM's question ONLY if it's actually phrased as a
-        # question (contains '?') AND mentions the message text. The LLM
-        # sometimes phrases this as a false completed-action statement
-        # ("... bhej diya hai" — "already sent") even though nothing has
-        # been sent yet (this is just staging). Speaking that would lie to
-        # the user, so we fall back to our own safe, deterministic question
-        # whenever the LLM's phrasing doesn't look like a real question.
         if question and message in question and '""' not in question and "?" in question:
             return question
         return f"{contact} ko '{message}' bhej doon?"
@@ -483,19 +531,14 @@ def _stage_and_confirm(contact: str, message: str | None, question: str | None) 
 
 
 def _fast_pending(user_text: str) -> str | None:
-    """Instant handling for bare yes/no replies to a staged send.
-    Everything more elaborate falls through to the LLM with pending context."""
     if not _pending_whatsapp:
         return None
     t = (user_text or "").strip().lower().strip(".!" )
 
-    # ---- email pending: bare yes/no fast path ----
     if _pending_whatsapp.get("kind") == "email":
         if t in _FAST_NO:
             _pending_whatsapp.clear()
             return "Theek hai, email cancel kar diya."
-        # bare 'haan' sends ONLY when the body was already dictated —
-        # otherwise fall through so the LLM asks what to write.
         if t in _FAST_YES and _pending_whatsapp.get("to") and _pending_whatsapp.get("body"):
             staged = dict(_pending_whatsapp)
             _pending_whatsapp.clear()
@@ -505,7 +548,7 @@ def _fast_pending(user_text: str) -> str | None:
                 "subject": staged.get("subject", ""),
                 "body": staged.get("body", ""),
             })
-        return None  # everything else → LLM with pending context
+        return None
 
     contact = _pending_whatsapp.get("contact", "")
     staged = _pending_whatsapp.get("message")
@@ -521,12 +564,11 @@ def _fast_pending(user_text: str) -> str | None:
             return _execute_and_reply("send_whatsapp", {"contact": contact, "message": staged})
         _pending_whatsapp.update({"contact": contact, "message": None})
         return "Kya message bhejna hai?"
-    return None  # let the LLM interpret any other phrasing
+    return None
 
 
 def think(user_text: str, history: list | None = None) -> str:
     """Send text to LLM, execute chosen tool, return the spoken reply."""
-    # Bare yes/no fast path (no LLM call)
     fast = _fast_pending(user_text)
     if fast is not None:
         return fast
@@ -547,9 +589,6 @@ def think(user_text: str, history: list | None = None) -> str:
         messages.extend(history)
     messages.append({"role": "user", "content": user_text})
 
-    # Only 2 attempts (not 3) — a 3rd retry on an already-rate-limited free
-    # tier just burns another request without helping, and speeds up
-    # exhausting the quota during back-to-back demo testing.
     models = [config.GROQ_MODEL, config.FALLBACK_MODEL]
 
     last_err = None
@@ -565,9 +604,6 @@ def think(user_text: str, history: list | None = None) -> str:
                 print(f"⚠  {m} failed ({str(e)[:60]}...) — retrying...")
     else:
         if _is_rate_limit(last_err):
-            # Every model is rate-limited right now — one short, final wait
-            # before giving up (rare; only hit under very heavy back-to-back
-            # testing on the free tier).
             time.sleep(2.0)
             resp = _complete(messages, model=config.GROQ_MODEL, tools=TOOLS, tool_choice="auto")
         else:
@@ -577,11 +613,10 @@ def think(user_text: str, history: list | None = None) -> str:
 
     capture = None if pending_active else _capture_intent(user_text)
 
-    # No tool called — plain chat reply
     if not msg.tool_calls:
         if pending_active:
             _pending_whatsapp.clear()
-        if capture:  # LLM refused an unambiguous capture command — override
+        if capture:
             return _force_capture(capture, user_text)
         return msg.content or "..."
 
@@ -594,7 +629,6 @@ def think(user_text: str, history: list | None = None) -> str:
 
     print(f"🛠  Tool: {name}({args})")
 
-    # LLM picked the WRONG tool for an unambiguous capture command
     if capture and name != _CAPTURE_TOOL[capture]:
         return _force_capture(capture, user_text)
 
@@ -610,8 +644,6 @@ def think(user_text: str, history: list | None = None) -> str:
             if extracted:
                 message = extracted
                 print(f"🔧 Extracted message from speech: '{message}'")
-        # If a send was staged for this contact, the LLM just confirmed or
-        # supplied the text — execute directly, don't re-ask.
         if pending_active and contact.lower() == contact_hint.lower():
             _pending_whatsapp.clear()
             return _execute_and_reply("send_whatsapp", {"contact": contact or contact_hint,
@@ -626,7 +658,6 @@ def think(user_text: str, history: list | None = None) -> str:
         subject = (args.get("subject") or "").strip()
         body = (args.get("body") or "").strip()
         if pending_active and _pending_whatsapp.get("kind") == "email":
-            # Confirmation (or corrected content) for the staged email.
             staged = dict(_pending_whatsapp)
             _pending_whatsapp.clear()
             return _execute_and_reply("send_email", {
@@ -636,7 +667,6 @@ def think(user_text: str, history: list | None = None) -> str:
             })
         if not to:
             return "Kisko email bhejna hai? Naam ya address bolein."
-        # Stage for confirmation — email goes out ONLY after a clear yes.
         _pending_whatsapp.clear()
         _pending_whatsapp.update({"kind": "email", "to": to, "subject": subject, "body": body})
         q = args.get("speak") or ""
@@ -645,13 +675,6 @@ def think(user_text: str, history: list | None = None) -> str:
             q = f"{to} ko email bhej doon?{detail}"
         return q
 
-    # Any other tool while pending → the user moved on; drop the pending
-    # state. EXCEPTION: general_reply is not a real new action — it's the
-    # LLM getting confused mid-confirmation and re-asking in its own words
-    # instead of using send_whatsapp/cancel_send/send_email as instructed.
-    # Dropping the pending state there was silently discarding the staged
-    # message before it was ever actually sent. Re-issue our own safe
-    # confirmation instead, keeping the staged send alive.
     if pending_active and name == "general_reply":
         if _pending_whatsapp.get("kind") == "email":
             to = _pending_whatsapp.get("to", "")
@@ -667,4 +690,14 @@ def think(user_text: str, history: list | None = None) -> str:
 
     if name in _SCREEN_TOOLS:
         return _screen_reply(name, args, user_text)
+
+    if name == "browser_action" and args.get("action") in ("get_text", "get_title", "get_link_url"):
+        if _executor is None:
+            return "Browser available nahi hai."
+        raw = _executor(name, args) or ""
+        print(f"⚙  Result: {raw}")
+        if raw.lower().startswith("error"):
+            return f"Maaf kijiye, ye nahi ho saka: {raw[6:].strip()}"
+        return raw  # speak the actual page content/title/url, not a canned reply
+
     return _execute_and_reply(name, args)
