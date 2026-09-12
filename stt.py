@@ -190,7 +190,10 @@ def _transcribe_raw(audio) -> tuple[str, str]:
                     break
             return text, lang
 
-        # Pass 2: remap known misfires (Hindi->Urdu, Arabic->Pashto)
+                # Pass 2: remap known misfires (Hindi/Arabic misheard as Urdu).
+        # Note: ROMAN_URDU_MODE always forces language="en", so this
+        # branch rarely triggers in practice — Urdu/Pashto voice choice
+        # actually happens later, via script-detection in main.py.
         if lang in _REMAP:
             text2, lang2 = _call_wav(path, _REMAP[lang])
             if text2:

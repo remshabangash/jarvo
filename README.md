@@ -79,3 +79,10 @@ venv\Scripts\python whatsapp_login.py
   brain.py mein alternate-model retry loop isko handle karta hai.
 - Screen recording 15 fps tick-based pacing use karti hai — grab slow ho to bhi
   playback duration real time ke barabar rehta hai. 5-minute safety cap hai.
+
+## Known Limitations
+
+- **Server.py runs on 0.0.0.0 without authentication.** Any device on the same
+  WiFi network can access it and trigger voice commands, WhatsApp messages,
+  or emails. This is an intentional trade-off for a local-network hackathon
+  demo, not an oversight — production use would need auth.

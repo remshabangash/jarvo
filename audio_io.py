@@ -120,7 +120,7 @@ def record_until_silence(max_wait_for_speech: float = 6.0):
                     peak_level = level
                 # End-of-turn: silence must be quiet RELATIVE to how loudly the
                 # user speaks. A fixed threshold cut phrases short whenever
-                # the mic gain was low; 55% of the user's own peak level does
+                # the mic gain was low; 40% of the user's own peak level does
                 # not (peaks are ~2-6x the mean speaking level).
                 silence_cut = max(threshold, peak_level * 0.4)
                 if level < silence_cut:
