@@ -1,0 +1,10 @@
+groq
+python-dotenv
+sounddevice
+numpy
+edge-tts
+miniaudio
+selenium
+flask
+mss
+opencv-python

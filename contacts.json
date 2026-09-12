@@ -1,0 +1,376 @@
+{
+  "_comment": [
+    "Apne contacts yahan likhein. Jo contacts ke paas PHONE number hai unke messages",
+    "sab se tez aur 100% reliable tareeqe (wa.me link) se jayenge. Bina number wale",
+    "contacts WhatsApp search se dhundhe jayenge (thoda slow, kabhi kabhi miss).",
+    "",
+    "Format:",
+    "  \"Naam jaisa bolna hai\": { \"phone\": \"923001234567\", \"aliases\": [\"urdu script\", \"misheard variants\"] }",
+    "",
+    "IMPORTANT: phone mein country code zaroor ho (Pakistan = 92...).",
+    "aliases mein wo ghalat naam likhein jo Whisper sun leta hai (console par",
+    "'👤 You:' line dekh kar copy karein).",
+    "",
+    "Yeh file Jazz_and_89_other_contacts.vcf se auto-generate hui hai (90 contacts)."
+  ],
+  "Jazz": {
+    "phone": "923095311624",
+    "aliases": []
+  },
+  "Bhai": {
+    "phone": "923099655934",
+    "aliases": []
+  },
+  "Khadeeja": {
+    "phone": "923377314692",
+    "aliases": []
+  },
+  "Neha Shah": {
+    "phone": "923365580215",
+    "aliases": []
+  },
+  "Papa Zong": {
+    "phone": "923189163794",
+    "aliases": []
+  },
+  "Laiba Saleem🍁": {
+    "phone": "923351158365",
+    "aliases": []
+  },
+  "Mohsin Babu": {
+    "phone": "923328326667",
+    "aliases": []
+  },
+  "Anisa Khattak": {
+    "phone": "923329592781",
+    "aliases": []
+  },
+  "Zoopash": {
+    "phone": "923355124297",
+    "aliases": []
+  },
+  "Areeba Ahmed": {
+    "phone": "923345387481",
+    "aliases": []
+  },
+  "Areeb Ydc": {
+    "phone": "923126818508",
+    "aliases": []
+  },
+  "Sir Daniyal": {
+    "phone": "923369333667",
+    "aliases": []
+  },
+  "👑sakina": {
+    "phone": "923348934922",
+    "aliases": []
+  },
+  "Shawal": {
+    "phone": "923159825477",
+    "aliases": []
+  },
+  "Muzdlfa": {
+    "phone": "923329625953",
+    "aliases": []
+  },
+  "Theodore❤️": {
+    "phone": "923324756075",
+    "aliases": []
+  },
+  "Babu": {
+    "phone": "923349613888",
+    "aliases": []
+  },
+  "Muskan": {
+    "phone": "923280688177",
+    "aliases": []
+  },
+  "Sir Ali Zeb": {
+    "phone": "923449222900",
+    "aliases": []
+  },
+  "Arshi": {
+    "phone": "923341923175",
+    "aliases": []
+  },
+  "Malaika": {
+    "phone": "923139262153",
+    "aliases": []
+  },
+  "Nazish Ali": {
+    "phone": "923109546651",
+    "aliases": []
+  },
+  "Sir Zeeshan": {
+    "phone": "923465575557",
+    "aliases": []
+  },
+  "Abid Afridi": {
+    "phone": "923430776768",
+    "aliases": []
+  },
+  "Sir Sajid Khattak": {
+    "phone": "923455908941",
+    "aliases": []
+  },
+  "Baji": {
+    "phone": "923109808223",
+    "aliases": []
+  },
+  "Laraib Bangash": {
+    "phone": "923354057585",
+    "aliases": []
+  },
+  "Abeera Bangash": {
+    "phone": "923310202965",
+    "aliases": []
+  },
+  "Ⓜ️faiza": {
+    "phone": "923319600286",
+    "aliases": []
+  },
+  "Mpa Daud Afridi": {
+    "phone": "923219619065",
+    "aliases": []
+  },
+  "Apaa😂": {
+    "phone": "923329775832",
+    "aliases": []
+  },
+  "Mam Alia": {
+    "phone": "923366616017",
+    "aliases": []
+  },
+  "Hira Sughra": {
+    "phone": "923355733052",
+    "aliases": []
+  },
+  "Mam Shumaila Discrete": {
+    "phone": "923339298056",
+    "aliases": []
+  },
+  "Tariq Aziz Sociology": {
+    "phone": "923329616968",
+    "aliases": []
+  },
+  "Aamirwofficial": {
+    "phone": "923320975599",
+    "aliases": []
+  },
+  "Pizza": {
+    "phone": "923009150299",
+    "aliases": []
+  },
+  "Laiba": {
+    "phone": "923142262949",
+    "aliases": []
+  },
+  "Broadway": {
+    "phone": "923329390687",
+    "aliases": []
+  },
+  "Django": {
+    "phone": "923199391668",
+    "aliases": []
+  },
+  "Sir jawad": {
+    "phone": "923459786123",
+    "aliases": []
+  },
+  "Sir Usman": {
+    "phone": "923160904969",
+    "aliases": []
+  },
+  "Meethi Meethi Sardi": {
+    "phone": "923336661672",
+    "aliases": []
+  },
+  "Zeeshan Bhai": {
+    "phone": "923319010616",
+    "aliases": []
+  },
+  "Haider": {
+    "phone": "923235014286",
+    "aliases": []
+  },
+  "Saqlain Bhai": {
+    "phone": "923400965393",
+    "aliases": []
+  },
+  "The Death Angle": {
+    "phone": "923339687272",
+    "aliases": []
+  },
+  "Hassan taj Sir": {
+    "phone": "923339667696",
+    "aliases": []
+  },
+  "Shafyy-7sep": {
+    "phone": "923199054056",
+    "aliases": []
+  },
+  "Nains": {
+    "phone": "923319243860",
+    "aliases": []
+  },
+  "Mehak Senior": {
+    "phone": "923311340505",
+    "aliases": []
+  },
+  "Taha Naseem": {
+    "phone": "923490262334",
+    "aliases": []
+  },
+  "Aliba": {
+    "phone": "923351894240",
+    "aliases": []
+  },
+  "Areeba": {
+    "phone": "923201956654",
+    "aliases": []
+  },
+  "Mah E Kamil🌚": {
+    "phone": "923349270712",
+    "aliases": []
+  },
+  "Faran": {
+    "phone": "923361041654",
+    "aliases": []
+  },
+  "Humna Nadeem": {
+    "phone": "923308975175",
+    "aliases": []
+  },
+  "Intern Noor Ul Hassan": {
+    "phone": "923225060902",
+    "aliases": []
+  },
+  "Papa": {
+    "phone": "923308648348",
+    "aliases": []
+  },
+  "Sir Ahmed Waleed": {
+    "phone": "923358595274",
+    "aliases": []
+  },
+  "💫Habiba Khan✨": {
+    "phone": "923144182458",
+    "aliases": []
+  },
+  "Noor Al Mulla": {
+    "phone": "923033344463",
+    "aliases": []
+  },
+  "Shaheera": {
+    "phone": "923049034921",
+    "aliases": []
+  },
+  "Malaika Atiq Kayani🔥 🖤": {
+    "phone": "923345179398",
+    "aliases": []
+  },
+  "Dr. Asif": {
+    "phone": "923369758800",
+    "aliases": []
+  },
+  "Sir Ilayas Programming": {
+    "phone": "923459800552",
+    "aliases": []
+  },
+  "Abdur-Raheem Afridi": {
+    "phone": "923490486289",
+    "aliases": []
+  },
+  "Zeeshan Khan Bakeinn": {
+    "phone": "923335019095",
+    "aliases": []
+  },
+  "Fajar": {
+    "phone": "923313808242",
+    "aliases": []
+  },
+  "Mama": {
+    "phone": "923339914743",
+    "aliases": []
+  },
+  "Asif": {
+    "phone": "18329281835",
+    "aliases": []
+  },
+  "Mam Samina": {
+    "phone": "923348311459",
+    "aliases": []
+  },
+  "Abdullah ...Linkdin": {
+    "phone": "923446339291",
+    "aliases": []
+  },
+  "Abdul Haleem": {
+    "phone": "923489536495",
+    "aliases": []
+  },
+  "AMINA KHAN❤️✨": {
+    "phone": "923329836917",
+    "aliases": []
+  },
+  "Tanzela Altaf": {
+    "phone": "923479996007",
+    "aliases": []
+  },
+  "bangash": {
+    "phone": "923719346003",
+    "aliases": []
+  },
+  "Rabeil": {
+    "phone": "923135354406",
+    "aliases": []
+  },
+  "💫amaraa Baji": {
+    "phone": "923332828394",
+    "aliases": []
+  },
+  "Kholah Ayat": {
+    "phone": "923460792922",
+    "aliases": []
+  },
+  "Sania": {
+    "phone": "923330529313",
+    "aliases": []
+  },
+  "Taswaib Prompt Engineering": {
+    "phone": "923419429291",
+    "aliases": []
+  },
+  "Asmat Pti": {
+    "phone": "923365565471",
+    "aliases": []
+  },
+  "DR💊MUHAMMAD FAISAL P rompt En": {
+    "phone": "923370202000",
+    "aliases": []
+  },
+  "hello": {
+    "phone": "923349086542",
+    "aliases": []
+  },
+  "Sir Abudrrahman": {
+    "phone": "923348259676",
+    "aliases": []
+  },
+  "Sir Zeeshan Assembly": {
+    "phone": "923400098087",
+    "aliases": []
+  },
+  "Sir Usman (2)": {
+    "phone": "923338805494",
+    "aliases": []
+  },
+  "Ishfaq Ghani (iishfoo)": {
+    "phone": "923332272830",
+    "aliases": []
+  },
+  "Cr": {
+    "phone": "923455428173",
+    "aliases": []
+  }
+}

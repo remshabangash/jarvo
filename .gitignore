@@ -1,0 +1,6 @@
+venv/
+.env
+__pycache__/
+server.log
+wa_error.png
+reply.mp3
