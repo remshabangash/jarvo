@@ -24,14 +24,16 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 import os
+import re
 import threading
-
 import time
+import uuid
 
 from flask import Flask, jsonify, request, send_from_directory
 
 import executor  # noqa: F401  (registers tools with brain — import before brain.think)
 import audio_io
+import chat_store
 import screen_tools
 import stt
 from brain import think
@@ -74,17 +76,20 @@ def add_agent_cors(response):
     response.headers.setdefault("Access-Control-Allow-Private-Network", "true")
     return response
 
-history = []  # simple in-memory chat history (single-user demo)
-activity_log = []  # last tool runs, newest last: {"tool", "detail", "ok", "t"}
+# Persistence: chat history + activity log live in chat_store.py (SQLite)
+# now — per-session, so two devices never mix conversations and history
+# survives server restarts. The session id comes from the browser via the
+# X-Session-Id header; the server mints one on the first request and the
+# client stores whatever the JSON response returns in "session".
+_SESSION_RE = re.compile(r"^[A-Za-z0-9_-]{8,64}$")
 
 
-def _record_activity(tool: str, detail: str = "", ok: bool = True):
-    """Track tool runs so the UI can show a live agent-activity strip."""
-    activity_log.append({
-        "tool": tool, "detail": detail[:60], "ok": ok,
-        "t": int(time.time()),
-    })
-    del activity_log[:-12]
+def _get_session_id() -> str:
+    """Validated session id from the X-Session-Id header, or a fresh one."""
+    sid = (request.headers.get("X-Session-Id") or "").strip()
+    if _SESSION_RE.match(sid):
+        return sid
+    return uuid.uuid4().hex  # 32 hex chars — matches _SESSION_RE
 
 
 # Wrap brain.think so every tool run lands in the activity log (regardless
@@ -92,10 +97,9 @@ def _record_activity(tool: str, detail: str = "", ok: bool = True):
 _think_inner = think
 
 
-def think(text, hist=None):
+def think(text, session_id: str, hist=None):
     import brain as _brain
     orig_exec = _brain._executor
-    log = _record_activity
 
     def wrapped(name, args):
         result = orig_exec(name, args)
@@ -110,12 +114,12 @@ def think(text, hist=None):
             detail = args.get("app_name", "")
         elif name == "web_search":
             detail = args.get("query", "")
-        log(name, detail, ok=not failed)
+        chat_store.record_activity(session_id, name, detail, ok=not failed)
         return result
 
     try:
         _brain._executor = wrapped
-        return _think_inner(text, hist if hist is not None else history)
+        return _think_inner(text, hist if hist is not None else [])
     finally:
         _brain._executor = orig_exec
 
@@ -204,11 +208,13 @@ def api_listen():
     if not text:
         return jsonify({"ok": False, "error": "Samajh nahi aaya. Dobara bolein."})
 
-    reply = _think_safely(text)
+    session_id = _get_session_id()
+    chat_store.touch_session(session_id)
+    reply = _think_safely(text, session_id)
     _speak_async(reply)
 
-    return jsonify({"ok": True, "user_text": text, "reply": reply,
-                    "speak_ms": _speak_ms(reply), "activity": activity_log[-6:]})
+    return jsonify({"ok": True, "user_text": text, "reply": reply, "session": session_id,
+                    "speak_ms": _speak_ms(reply), "activity": chat_store.get_activity(session_id)})
 
 
 @app.route("/api/text", methods=["POST"])
@@ -219,24 +225,35 @@ def api_text():
     if not text:
         return jsonify({"ok": False, "error": "Kuch likha nahi gaya."})
 
-    reply = _think_safely(text)
+    session_id = _get_session_id()
+    chat_store.touch_session(session_id)
+    reply = _think_safely(text, session_id)
     _speak_async(reply)
 
-    return jsonify({"ok": True, "user_text": text, "reply": reply,
-                    "speak_ms": _speak_ms(reply), "activity": activity_log[-6:]})
+    return jsonify({"ok": True, "user_text": text, "reply": reply, "session": session_id,
+                    "speak_ms": _speak_ms(reply), "activity": chat_store.get_activity(session_id)})
 
 
-def _think_safely(text: str) -> str:
-    global history
+@app.route("/api/history")
+def api_history():
+    """Stored conversation for this session (oldest first) — lets the UI
+    restore the chat after a page reload or server restart."""
+    session_id = _get_session_id()
+    chat_store.touch_session(session_id)
+    return jsonify({"ok": True, "session": session_id,
+                    "messages": chat_store.get_history(session_id)})
+
+
+def _think_safely(text: str, session_id: str) -> str:
+    history = chat_store.get_history(session_id)
     try:
-        reply = think(text, history)
+        reply = think(text, session_id, history)
     except Exception as e:
         print(f"Error: {str(e)[:80]}")
         reply = FALLBACKS[len(history) % len(FALLBACKS)]
 
-    history.append({"role": "user", "content": text})
-    history.append({"role": "assistant", "content": reply})
-    del history[:-10]
+    chat_store.append_message(session_id, "user", text)
+    chat_store.append_message(session_id, "assistant", reply)
     return reply
 
 

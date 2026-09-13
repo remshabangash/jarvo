@@ -1741,10 +1741,25 @@
         return localStorage.getItem("saathiToken") || "";
       }
 
+      // Persistent per-browser session id — the server keys chat history by
+      // it, so this conversation survives page reloads and server restarts
+      // (and never mixes with another device's chat).
+      function getSessionId() {
+        let sid = localStorage.getItem("saathiSession");
+        if (!sid || !/^[A-Za-z0-9_-]{8,64}$/.test(sid)) {
+          sid = crypto.randomUUID
+            ? crypto.randomUUID().replace(/-/g, "")
+            : Math.random().toString(36).slice(2) + Date.now().toString(36);
+          localStorage.setItem("saathiSession", sid);
+        }
+        return sid;
+      }
+
       async function authedFetch(path, options = {}) {
         const token = getAuthToken();
         const headers = Object.assign({}, options.headers || {});
         if (token) headers["X-Auth-Token"] = token;
+        headers["X-Session-Id"] = getSessionId();
         const res = await fetch(agentUrl(path), Object.assign({}, options, { headers }));
         if (res.status === 401) {
           const entered = window.prompt(
@@ -1788,6 +1803,21 @@
           textInput.value = "";
         }
       });
+
+      // Restore this session's stored conversation (best-effort) before the
+      // ready message, so a reload puts the chat back on screen.
+      (async function restoreHistory() {
+        try {
+          const res = await authedFetch("/api/history").then((r) => r.json());
+          if (res.ok && Array.isArray(res.messages)) {
+            for (const m of res.messages) {
+              addMsg(m.content, m.role === "user" ? "user" : "bot");
+            }
+          }
+        } catch (e) {
+          /* history restore is best-effort */
+        }
+      })();
 
       addMsg(
         "SAATHI is ready. Tap the mic, speak, then wait for the reply.",
