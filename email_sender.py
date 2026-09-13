@@ -109,8 +109,8 @@ def send_email(to: str, subject: str, body: str) -> str:
     address = _resolve_email(to)
     if not address:
         raise EmailError(
-            f"'{to}' ka email address nahi mila. email_sender.py mein "
-            f"EMAIL_CONTACTS list mein add karen."
+            f"'{to}' ka email address nahi mila. Isay email_contacts.json "
+            f"mein add karen, ya bolein: '{to} ka email save karo'."
         )
 
     msg = MIMEMultipart()

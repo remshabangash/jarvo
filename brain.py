@@ -12,12 +12,17 @@ Design principles (agentic, NOT command-based):
 - 20b primary (fast, reliable tool-JSON), 120b fallback, retry loop
 """
 import json
+import os
 import re
 import time
 
 from groq import Groq
 
 import config
+
+# The user's own email (from .env EMAIL_ADDRESS) — lets the LLM resolve
+# "mujhe email bhejo" / "my email" without inventing a placeholder address.
+_OWNER_EMAIL = (getattr(config, "EMAIL_ADDRESS", "") or "").strip()
 
 _client = Groq(api_key=config.GROQ_API_KEY)
 
@@ -152,7 +157,7 @@ TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "to": {"type": "string", "description": "Recipient as spoken: a person's name OR an email address"},
+                    "to": {"type": "string", "description": "Recipient as spoken: a person's name OR an email address the user themselves said. NEVER invent a placeholder address — if the user gave no address, put the spoken name here."},
                     "subject": {"type": "string", "description": "Email subject from the user's words. Empty if not said."},
                     "body": {"type": "string", "description": "Email body from the user's exact words. Empty if not dictated yet."},
                     "speak": {"type": "string", "description": "Confirmation QUESTION in user's language (includes recipient and subject/body if known)"},
@@ -646,6 +651,11 @@ def think(user_text: str, history: list | None = None) -> str:
         addendum += (
             f"\n\nKNOWN CONTACTS (if the spoken name resembles one of these —"
             f" Whisper mishears names often — use the EXACT spelling): {known}"
+        )
+    if _OWNER_EMAIL:
+        addendum += (
+            f"\nWhen the user says 'mujhe', 'my email', 'khud ko' (send to me)"
+            f" — use this address: {_OWNER_EMAIL}"
         )
 
     messages = [{"role": "system", "content": SYSTEM_PROMPT + addendum}]
