@@ -52,6 +52,13 @@ natural phrasing and map it to the closest capability:
 - The user wants a WhatsApp message sent to a person (phrased any way:
   "bolo", "likho", "bhejo", "message", "text", "tell them"...) → send_whatsapp.
   A person's name is NEVER a valid app_name.
+- The user wants to SAVE/remember a contact ("number save karo", "naya contact
+  add karo", "ye email yaad rakho", "Ali ka number Store karo 92300...") →
+  add_contact. If they gave only the number, put it in "phone"; if only an
+  email address, put it in "email". ALWAYS repeat the digits/address back in
+  "speak" as a confirmation question — misheard digits are the #1 risk here.
+  Do NOT call add_contact when the user merely mentions a contact while
+  asking for something else (send, search, open...).
 - The user wants information, news, score, weather, or to look something up
   → web_search with a clean query.
 - The user wants a screenshot of the screen (any phrasing: "screenshot lo",
@@ -99,6 +106,28 @@ _FAST_YES = {"haan", "han", "haan ji", "yes", "ok", "okay", "theek hai", "ji", "
 _FAST_NO = {"nahi", "nahin", "nai", "no", "نہیں"}
 
 TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "add_contact",
+            "description": (
+                "Save a NEW contact (or update an existing one) when the user "
+                "explicitly asks to remember/store someone — e.g. 'Ali ka number "
+                "save karo 923001234567', 'remember this email', 'naya contact "
+                "add karo'. NOT for sending messages — only for storing contact info."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string", "description": "Contact name as spoken"},
+                    "phone": {"type": "string", "description": "Phone digits (international, no +) if the user said a number. Empty if not said."},
+                    "email": {"type": "string", "description": "Email address if the user said one. Empty if not said."},
+                    "speak": {"type": "string", "description": "Confirmation QUESTION in user's language, e.g. 'Ali ka number 9230...67 save kar doon?' — repeat the number/email back so misheard digits get caught."},
+                },
+                "required": ["name", "speak"],
+            },
+        },
+    },
     {
         "type": "function",
         "function": {
@@ -476,7 +505,7 @@ def _execute_and_reply(name: str, args: dict) -> str:
         result_text = _executor(name, args) or ""
         print(f"⚙  Result: {result_text}")
 
-    FAILURE_MARKERS = ("error", "failed", "nahi mili", "nahi mila", "could not")
+    FAILURE_MARKERS = ("error", "failed", "nahi mili", "nahi mila", "could not", "nahi hua", "nahi kar sakta")
     failed = any(m in result_text.lower() for m in FAILURE_MARKERS)
 
     if failed:
@@ -490,10 +519,24 @@ def _execute_and_reply(name: str, args: dict) -> str:
         return f"{args.get('contact', '')} ko message bhej diya hai."
     if name == "send_email":
         return f"Email bhej diya hai."
+    if name == "add_contact":
+        what = args.get("phone") or args.get("email") or "contact"
+        return f"Save ho gaya: {args.get('name', '')} — {what}."
     return args.get("speak") or args.get("reply") or "Ho gaya."
 
 
 def _pending_addendum() -> str:
+    if _pending_whatsapp.get("kind") == "contact":
+        c_name = _pending_whatsapp.get("name", "")
+        what = _pending_whatsapp.get("phone") or _pending_whatsapp.get("email") or ""
+        return (
+            f"\n\nPENDING CONTEXT: Saving contact '{c_name}' ({what}) is staged and"
+            " awaits the user's yes/no. Interpret the latest utterance FREELY:\n"
+            "- Clearly approving → call add_contact with EXACTLY the staged name/phone/email.\n"
+            "- Clearly declining → call cancel_send.\n"
+            "- Correcting the number/address → call add_contact with the CORRECTED value.\n"
+            "- An unrelated new request → ignore the pending state and handle it normally."
+        )
     if _pending_whatsapp.get("kind") == "email":
         to = _pending_whatsapp.get("to", "")
         subject = _pending_whatsapp.get("subject") or ""
@@ -542,6 +585,19 @@ def _fast_pending(user_text: str) -> str | None:
     if not _pending_whatsapp:
         return None
     t = (user_text or "").strip().lower().strip(".!" )
+
+    if _pending_whatsapp.get("kind") == "contact":
+        # Contact-save confirmation: bare yes commits through the executor,
+        # bare no cancels — no LLM round-trip (latency optimization).
+        if t in _FAST_NO:
+            _pending_whatsapp.clear()
+            return "Theek hai, save cancel kar diya."
+        if t in _FAST_YES:
+            staged = dict(_pending_whatsapp)
+            _pending_whatsapp.clear()
+            print(f"🛠  Tool: add_contact({staged['name']})  [fast confirm]")
+            return _execute_and_reply("add_contact", staged)
+        return None  # other phrasing → LLM decides (with the addendum)
 
     if _pending_whatsapp.get("kind") == "email":
         if t in _FAST_NO:
@@ -683,7 +739,41 @@ def think(user_text: str, history: list | None = None) -> str:
             q = f"{to} ko email bhej doon?{detail}"
         return q
 
+    if name == "add_contact":
+        c_name = (args.get("name") or "").strip()
+        c_phone = re.sub(r"\D", "", (args.get("phone") or ""))
+        c_email = (args.get("email") or "").strip()
+        if pending_active and _pending_whatsapp.get("kind") == "contact":
+            # Confirmation arrived in other words ("bilkul", "kar do", a
+            # correction) — commit now, merging any corrected details.
+            staged = dict(_pending_whatsapp)
+            _pending_whatsapp.clear()
+            return _execute_and_reply("add_contact", {
+                "name": c_name or staged["name"],
+                "phone": c_phone or staged["phone"],
+                "email": c_email or staged["email"],
+            })
+        q = args.get("speak") or ""
+        if not c_name:
+            return "Kiska contact save karna hai? Naam bolein."
+        if not c_phone and not c_email:
+            return (f"{c_name} ka number ya email bolein — "
+                    f"phir save kar doonga.")
+        # Fresh save: stage the details as a confirmation QUESTION (digits
+        # repeated back so misheard digits get caught before writing).
+        _pending_whatsapp.clear()
+        _pending_whatsapp.update({"kind": "contact", "name": c_name,
+                                  "phone": c_phone, "email": c_email})
+        if "?" in q and (c_phone or c_email) in q:
+            return q
+        what = c_phone or c_email
+        return f"{c_name} ke liye '{what}' save kar doon?"
+
     if pending_active and name == "general_reply":
+        if _pending_whatsapp.get("kind") == "contact":
+            c_name = _pending_whatsapp.get("name", "")
+            what = _pending_whatsapp.get("phone") or _pending_whatsapp.get("email") or ""
+            return f"{c_name} ke liye '{what}' save kar doon?"
         if _pending_whatsapp.get("kind") == "email":
             to = _pending_whatsapp.get("to", "")
             subject = _pending_whatsapp.get("subject") or ""

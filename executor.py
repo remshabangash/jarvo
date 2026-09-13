@@ -51,6 +51,29 @@ def _send_email_tool(args: dict) -> str:
         return f"Email error: {type(e).__name__}: {str(e)[:100]}"
 
 
+# ---------------- Contacts (voice-saved) ----------------
+
+def _add_contact_tool(args: dict) -> str:
+    """Save what the user dictated: phone -> WhatsApp contacts, email ->
+    email contacts (either or both). Returns a speakable result string."""
+    name = (args.get("name") or "").strip()
+    phone = (args.get("phone") or "").strip()
+    email = (args.get("email") or "").strip()
+    results = []
+    try:
+        if phone:
+            from whatsapp_bot import save_contact
+            results.append(save_contact(name, phone))
+        if email:
+            from email_sender import save_email_contact
+            results.append(save_email_contact(name, email))
+    except Exception as e:
+        return f"Error: contact save nahi hua ({type(e).__name__}: {str(e)[:80]})"
+    if not results:
+        return "Error: number ya email ke bagair save nahi kar sakta."
+    return " ".join(results)
+
+
 # ---------------- Screen capture ----------------
 
 def _screenshot() -> str:
@@ -136,6 +159,8 @@ def execute(name: str, args: dict) -> str:
         return send_whatsapp(args.get("contact", ""), args.get("message", ""))
     if name == "send_email":
         return _send_email_tool(args)
+    if name == "add_contact":
+        return _add_contact_tool(args)
     if name == "open_app":
         return open_app(args.get("app_name", ""))
     if name == "browser_action":

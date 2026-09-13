@@ -27,6 +27,7 @@ import atexit
 import difflib
 import json
 import os
+import re
 import threading
 import time
 from urllib.parse import quote
@@ -277,10 +278,53 @@ def _shot(d) -> str:
         print(f"📸 Screenshot saved: {ERROR_SHOT}")
     except Exception:
         pass
-    return ERROR_SHOT
+    return ERROR_SHOT# ---------------- Contact resolution (contacts.json + aliases) ----------------
+
+def _upsert_contact(name: str, v: dict) -> dict:
+    """Read-modify-write contacts.json, adding/updating ONE entry while
+    preserving every other key (comments, order, formatting of the rest).
+    File-lock protected so two threads (server + wake listener) can't race.
+    Returns the contacts dict that was written."""
+    raw = {}
+    if os.path.exists(CONTACTS_FILE):
+        try:
+            with open(CONTACTS_FILE, encoding="utf-8") as f:
+                raw = json.load(f)
+            if not isinstance(raw, dict):
+                raw = {}
+        except Exception as e:
+            print(f"⚠  contacts.json unreadable ({e}) — starting a fresh one")
+            raw = {}
+    raw[name] = v
+    with _contacts_lock:
+        tmp = CONTACTS_FILE + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(raw, f, ensure_ascii=False, indent=2)
+        os.replace(tmp, CONTACTS_FILE)  # atomic on Windows + POSIX
+    return raw
 
 
-# ---------------- Contact resolution (contacts.json + aliases) ----------------
+_contacts_lock = threading.Lock()
+
+
+def save_contact(name: str, phone: str, aliases: list | None = None) -> str:
+    """Save/update a WhatsApp contact by voice: write-through to contacts.json
+    AND refresh the in-memory cache this module resolves from. Phone must be
+    digits (international, no +) — same format the deep-link path dials."""
+    name = (name or "").strip()
+    phone_digits = re.sub(r"\D", "", phone or "")
+    if not name:
+        return "Error: contact ka naam nahi mila."
+    if not phone_digits or len(phone_digits) < 7:
+        return ("Error: phone number sahi nahi laga — country code ke saath "
+                "digits mein bolein, jaise 92 300 1234567.")
+    entry = {"phone": phone_digits, "aliases": [a.strip() for a in (aliases or []) if a.strip()]}
+    _upsert_contact(name, entry)
+    # NOTE: _load_contacts() reads the file fresh on every resolution call,
+    # so the new contact is usable immediately — no cache to invalidate.
+    print(f"💾 Contact saved: {name} ({digits_fmt(phone_digits)})")
+    return f"Contact saved: {name} ({digits_fmt(phone_digits)})"
+
 
 def _load_contacts() -> dict:
     """Read contacts.json -> {name: {"phone": str|None, "aliases": [..]}}."""

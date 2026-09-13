@@ -18,6 +18,7 @@ import json
 import os
 import smtplib
 import difflib
+import threading
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.utils import formatdate, make_msgid
@@ -44,6 +45,40 @@ def _load_email_contacts() -> dict:
 
 
 EMAIL_CONTACTS = _load_email_contacts()
+
+_email_contacts_lock = threading.Lock()
+
+
+def save_email_contact(name: str, address: str) -> str:
+    """Save/update an email contact by voice: write-through to the gitignored
+    email_contacts.json and refresh the in-memory snapshot used for
+    resolution. Address must contain '@' and a dot in the domain."""
+    name = (name or "").strip().lower()
+    address = (address or "").strip()
+    if not name:
+        return "Error: contact ka naam nahi mila."
+    if "@" not in address or "." not in address.split("@")[-1]:
+        return "Error: email address poori nahi lagi — dobara bolein."
+    raw = {}
+    if os.path.exists(_CONTACTS_FILE):
+        try:
+            with open(_CONTACTS_FILE, encoding="utf-8") as f:
+                raw = json.load(f)
+            if not isinstance(raw, dict):
+                raw = {}
+        except Exception as e:
+            print(f"⚠  email_contacts.json unreadable ({e}) — starting a fresh one")
+            raw = {}
+    raw[name] = address
+    with _email_contacts_lock:
+        tmp = _CONTACTS_FILE + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(raw, f, ensure_ascii=False, indent=2)
+        os.replace(tmp, _CONTACTS_FILE)  # atomic
+    global EMAIL_CONTACTS
+    EMAIL_CONTACTS = _load_email_contacts()  # refresh resolution snapshot
+    print(f"💾 Email contact saved: {name} -> {address}")
+    return f"Email contact saved: {name}"
 
 
 class EmailError(Exception):
