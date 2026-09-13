@@ -1,96 +1,117 @@
 # SAATHI — Multilingual Voice Assistant
 
-Urdu / English / Pashto voice assistant — Mic → Whisper STT (Groq) → LLM Brain (Groq, tool-use) → Task Executor → TTS (edge-tts). 100% free stack.
+[![CI](https://github.com/remshabangash/saathi-hackathon/actions/workflows/ci.yml/badge.svg)](https://github.com/remshabangash/saathi-hackathon/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.13-blue)
+![Tests](https://img.shields.io/badge/tests-95%20passing-brightgreen)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
 
-## Setup (one-time)
+Speak in **Urdu, English, or Pashto** — SAATHI listens, understands free-form
+intent, and actually *does things* on your computer: opens apps, sends
+WhatsApp messages and emails, takes screenshots, records the screen, and
+drives a browser. 100% free stack, no paid APIs.
+
+```
+🎤 Mic → 📝 Whisper STT (Groq) → 🧠 LLM Brain (Groq, tool-use) → ⚙️ Executor → 🔊 TTS (edge-tts)
+```
+
+## Features
+
+| | Say it like this | What happens |
+|---|---|---|
+| 🚀 Open anything | *"Notepad khol do"*, *"Open YouTube"* | Any installed app, UWP/Store app, or website — resolved live from the Start Menu (no fixed command list) |
+| 💬 WhatsApp | *"Ahmed ko hello bhejo"* | Real send through a pre-loaded, persistent WhatsApp Web session with header + send verification |
+| 📧 Email | *"Remsha ko email bhejo"* | Gmail SMTP with contact-name resolution |
+| 🌐 Controlled browser | *"...is par click karo, neeche scroll karo"* | Follow-up commands act on the same Selenium-driven page across turns |
+| 📸 Screen capture | *"screenshot le lo"*, *"recording shuru karo"* | PNG + MP4 (real-time paced), saved to `Pictures/SAATHI` |
+| 🗂️ Save contacts by voice | *"Ali ka number save karo 9230..."* | Confirms digits back, then writes WhatsApp/email contacts atomically |
+| 💾 Remembers the conversation | — | Chat history persists in SQLite per device/session — survives restarts and reloads |
+| 🌍 Three languages | Urdu / English / Pashto | Roman-Urdu transcription handling, native Pashto TTS voice, per-reply voice selection |
+
+Every destructive action (sends, saves) goes through a spoken **confirmation
+step** — nothing goes out on a single misheard word.
+
+## Quick Start
 
 ```bash
+# 1. Environment
 python -m venv venv
 venv\Scripts\pip install -r requirements.txt
-```
 
-`.env` mein Groq key (`.env.example` copy kar ke shuru karein):
+# 2. API keys — copy the template, add your Groq keys
+copy .env.example .env        # then edit .env
 
-```
-GROQ_API_KEY=gsk_...
-```
+# 3. Personal data — templates only; fill with YOUR contacts
+copy contacts.example.json contacts.json
+copy email_contacts.example.json email_contacts.json
 
-Personal data files (gitignored — repo mein template versions hain):
-
-```bash
-copy contacts.example.json contacts.json          # WhatsApp contacts + numbers
-copy email_contacts.example.json email_contacts.json  # Email contacts
-```
-(In dono files mein apne REAL contacts bhar dein — ye sirf aapke laptop par rehti hain.)
-
-## Run
-
-```bash
-venv\Scripts\python main.py
-```
-
-Bol kar baat karein. `quit` bolein ya Ctrl+C dabaein.
-
-## Kya kaam kar sakta hai
-
-- **App kholna** — "Notepad khol do", "Open Chrome"
-- **Web search** — "Pakistan ka score batao"
-- **WhatsApp** — "Ahmed ko hello bhejo" (pehli baar: Edge profile login, details neeche)
-- **Screenshot** — "screenshot le lo", "screen ki photo lo" → `captures/` mein PNG
-- **Screen recording** — "screen recording shuru karo" ... "recording band karo" → MP4
-- **General baat-cheet** — koi bhi sawal, kisi bhi zaban mein
-
-## WhatsApp ka pehla setup (demo se pehle ek baar)
-
-```bash
+# 4. WhatsApp one-time login (QR scan, session is saved)
 venv\Scripts\python whatsapp_login.py
+
+# 5. Run!
+venv\Scripts\python main.py          # voice mode
+venv\Scripts\python main.py --text   # keyboard mode
+venv\Scripts\python Server.py        # web UI → http://localhost:5000
 ```
 
-- WhatsApp Web QR scan karein — session `~/saathi_edge_profile` mein save hota hai
-- Iske baad voice se message bhejna kaam karega bina QR ke
+Keys are free: [console.groq.com/keys](https://console.groq.com/keys) (LLM +
+STT). Optional: Gmail **App Password** for email, `SAATHI_TOKEN` for web
+authentication.
 
-### Speed ka raaz (kyun ab ye fast hai)
+## How it stays fast (demo secrets)
 
-- **Startup par WhatsApp background mein pre-load** hota hai — jab tak aap pehla
-  command bolte ho, session already ready (warna 25–40s cold load lagta)
-- **Deep-link navigation sirf last resort** — har `wa.me` navigation poori web app
-  ko dobara bootstrap karti hai (25–40s). Normal sends in-app search se chat kholte
-  hain: **~9s pehli baar, ~1–2s agli baar same chat** (composer direct)
-- Har chat kholne se pehle **header verify** hota hai — ghalat chat mein type nahi hoga
-- Har send ke baad **verify** hota hai ke message pane mein actually aaya —
-  warna saaf error bolti hai (screenshot `wa_error.png` mein)
+- **WhatsApp pre-loads in the background at startup** — the first voice
+  command doesn't pay the 25–40s web-app cold load (~1–2s re-sends).
+- In-app search opens chats; slow `wa.me` deep-links are the last resort.
+- Whisper misfires (Urdu→Hindi/Arabic) are auto-remapped; misheard
+  WhatsApp/YouTube/Chrome words are post-corrected.
+- LLM: `gpt-oss-20b` primary (fast, reliable tool-JSON), `120b` fallback on
+  rate limits. Tool calls carry their own spoken reply — no extra round-trip.
 
-## Architecture / Files
+## Architecture
 
-| File | Kaam |
-|---|---|
-| `main.py` | Main loop: mic → STT → brain → executor → TTS |
-| `audio_io.py` | Mic recording (silence-detection) |
-| `stt.py` | Groq Whisper (cloud) + language retry logic |
-| `brain.py` | Groq LLM + tool definitions |
-| `executor.py` | open_app / web_search / whatsapp / screenshot / recording dispatch |
-| `screen_tools.py` | Screenshot (mss) + MP4 screen recording (OpenCV, background thread) |
-| `whatsapp_bot.py` | Selenium WhatsApp Web automation (persistent + pre-loaded Edge session) |
-| `wa_doctor.py` | WhatsApp diagnosis: `venv\Scripts\python wa_doctor.py` |
-| `contacts.json` | Contacts + phone numbers (fast wa.me path) + misheard aliases |
-| `tts.py` | edge-tts + playback (miniaudio decode + sounddevice) |
-| `config.py` | Models, voices, thresholds |
+```
+main.py / Server.py / gui.py      ← entry points (voice / web / windowed)
+        │
+   audio_io.py                    mic capture, ambient calibration, VAD
+   stt.py                         Groq Whisper + language retry + word fixes
+   brain.py                       LLM tool-use, confirmation state machine
+   executor.py                    dispatch: tools → workers
+   ├── app_resolver/              cross-platform app launching (win/macos/linux)
+   ├── whatsapp_bot.py            Selenium WhatsApp Web (persistent session)
+   ├── email_sender.py            Gmail SMTP + voice-saved contacts
+   ├── screen_tools.py            screenshots + MP4 recording
+   ├── browser_bot.py             controllable browser (click/scroll/type)
+   └── chat_store.py              SQLite: sessions, history, activity
+static/index.html                 web UI (auth-aware, history restore)
+tests/                            95 offline tests (mocked LLM, no API keys)
+```
 
-## Notes / Hacks jo demo mein kaam aaye
+## Testing & CI
 
-- Whisper auto-detect Urdu ko Hindi aur Pashto ko Arabic samajhta hai — `stt.py` mein
-  forced-language retry (`hi→ur`, `ar→ps`) isko fix karta hai.
-- Pashto ke liye Edge-TTS ke native voices (`ps-AF-GulNawazNeural`) use hue —
-  text-fallback ki zaroorat nahi padi.
-- GPT-OSS-20B (Groq free tier) primary hai — tool-JSON parsing mein sab se reliable
-  aur fastest. 120b fallback hai. Pashto input kabhi kabhi JSON parse-fail deta hai —
-  brain.py mein alternate-model retry loop isko handle karta hai.
-- Screen recording 15 fps tick-based pacing use karti hai — grab slow ho to bhi
-  playback duration real time ke barabar rehta hai. 5-minute safety cap hai.
+Every push runs [GitHub Actions CI](.github/workflows/ci.yml):
+**compile checks on all 22 modules + 95 offline unit tests** (brain pipeline
+with a fake Groq client, WhatsApp/email confirmation state machines, OS
+resolvers, STT normalization, SQLite store) — fully mocked, no API keys
+needed. Run locally:
 
-## Known Limitations
+```bash
+venv\Scripts\python -m pytest tests/ -v
+```
 
-- **Server.py runs on 0.0.0.0 without authentication.** Any device on the same
-  WiFi network can access it and trigger voice commands, WhatsApp messages,
-  or emails. This is an intentional trade-off for a local-network hackathon
-  demo, not an oversight — production use would need auth.
+## Security notes
+
+- The web server binds **127.0.0.1 by default** — only this laptop can reach it.
+  To serve other devices on your WiFi, set `SAATHI_HOST=0.0.0.0` and **set
+  `SAATHI_TOKEN`** in `.env`; the web UI will prompt for the token once and
+  sign every request.
+- Personal files (`.env`, `contacts.json`, `email_contacts.json`, `saathi.db`)
+  are gitignored — templates live in the repo, real data stays on your machine.
+- Voice-saved contacts and all sends require spoken confirmation first.
+
+## Known limitations
+
+- WhatsApp automation depends on WhatsApp Web's DOM — UI changes upstream can
+  need selector updates (`wa_doctor.py` diagnoses).
+- STT/LLM are cloud (Groq) — a network outage stops new commands (voice modes
+  degrade gracefully with spoken fallbacks).
+- Screen recording caps at 5 minutes (safety), 15 fps.
