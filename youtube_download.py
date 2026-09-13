@@ -21,7 +21,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 
-YT_PROFILE = os.path.join(os.path.expanduser("~"), "saathi_yt_profile")
+YT_PROFILE = os.path.join(os.path.expanduser("~"), "jarvo_yt_profile")
 
 _lock = threading.RLock()
 _driver = None

@@ -1,5 +1,5 @@
 """
-server.py — SAATHI web server.
+server.py — JARVO web server.
 
 Serves a polished browser-based chat UI (static/index.html) and exposes
 the existing voice pipeline (audio_io -> stt -> brain -> executor -> tts)
@@ -42,27 +42,27 @@ from main import detect_script, FALLBACKS
 
 app = Flask(__name__, static_folder="static", static_url_path="")
 
-# Optional shared-secret auth: set SAATHI_TOKEN in .env to require it on
+# Optional shared-secret auth: set JARVO_TOKEN in .env to require it on
 # every action endpoint (anything that can send WhatsApp/email/etc.).
-# If SAATHI_TOKEN is not set, auth is skipped (same behaviour as before --
+# If JARVO_TOKEN is not set, auth is skipped (same behaviour as before --
 # fine for a laptop-only demo, NOT fine once other devices join the WiFi).
-SAATHI_TOKEN = os.getenv("SAATHI_TOKEN", "").strip()
+JARVO_TOKEN = os.getenv("JARVO_TOKEN", "").strip()
 
-# Endpoints that stay open even when SAATHI_TOKEN is set (serving the page
+# Endpoints that stay open even when JARVO_TOKEN is set (serving the page
 # itself and a cheap liveness check -- neither can trigger an action).
 _PUBLIC_PATHS = {"/", "/api/health"}
 
 
 @app.before_request
 def _check_auth():
-    if not SAATHI_TOKEN:
+    if not JARVO_TOKEN:
         return None  # auth disabled -- no token configured
     if request.method == "OPTIONS":
         return None  # let CORS preflight through
     if request.path in _PUBLIC_PATHS or request.path.startswith("/static"):
         return None
     supplied = request.headers.get("X-Auth-Token") or request.args.get("token", "")
-    if supplied != SAATHI_TOKEN:
+    if supplied != JARVO_TOKEN:
         return jsonify({"error": "unauthorized -- missing or wrong token"}), 401
     return None
 
@@ -142,12 +142,12 @@ def index():
 
 @app.route("/api/health")
 def api_health():
-    return jsonify({"ok": True, "agent": "saathi", "service": "local"})
+    return jsonify({"ok": True, "agent": "jarvo", "service": "local"})
 
 
 @app.route("/captures/<path:fname>")
 def captures_file(fname):
-    """Serve a screenshot/recording from the Pictures/SAATHI folder."""
+    """Serve a screenshot/recording from the Pictures/JARVO folder."""
     return send_from_directory(screen_tools.SHOTS_DIR, fname)
 
 
@@ -269,7 +269,7 @@ def _think_safely(text: str, session_id: str) -> str:
 if __name__ == "__main__":
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 5000
     print("=" * 52)
-    print("  SAATHI web server")
+    print("  JARVO web server")
     print("=" * 52)
     print("⏳ Modules load ho rahe hain (10-20s lag sakta hai)...")
 
@@ -282,12 +282,12 @@ if __name__ == "__main__":
         pass
 
     try:
-        host = os.getenv("SAATHI_HOST", "127.0.0.1")
+        host = os.getenv("JARVO_HOST", "127.0.0.1")
         app.run(host=host, port=port, debug=False)
     except OSError as e:
         if "10048" in str(e) or "in use" in str(e).lower() or "address" in str(e).lower():
             print(f"\n❌ Port {port} pehle se use mein hai.")
-            print("   Fix 1: Purani SAATHI server window band karein (Ctrl+C us window mein).")
+            print("   Fix 1: Purani JARVO server window band karein (Ctrl+C us window mein).")
             print(f"   Fix 2: Doosra port:  venv\\Scripts\\python Server.py {port + 1}")
         else:
             raise

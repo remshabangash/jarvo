@@ -24,7 +24,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import ElementClickInterceptedException
 
-BROWSER_PROFILE = os.path.join(os.path.expanduser("~"), "saathi_browser_profile")
+BROWSER_PROFILE = os.path.join(os.path.expanduser("~"), "saathi_browser_profile")  # legacy folder name kept — renaming would orphan saved browser state
 ERROR_SHOT = os.path.join(os.path.dirname(__file__), "browser_error.png")
 
 _MAX_PAGE_TEXT_CHARS = 1500

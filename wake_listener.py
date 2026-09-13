@@ -1,8 +1,8 @@
-"""wake_listener.py — background wake-word service for SAATHI.
+"""wake_listener.py — background wake-word service for JARVO.
 
 Run this at Windows startup (see setup_autostart.bat). It sits quietly in
 the background, listens to short bursts of audio, and only when it hears
-something matching "SAATHI" does it:
+something matching "JARVO" does it:
   1. Start Server.py (if it isn't already running on port 5000), and
   2. Open the browser to http://127.0.0.1:5000
 
@@ -26,11 +26,10 @@ import stt
 PORT = 5000
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Common ways Whisper mishears "SAATHI" when spoken casually / with an accent.
+# Common ways Whisper mishears "JARVO" when spoken casually / with an accent.
 _WAKE_VARIANTS = [
-    "saathi", "sathi", "saathi", "sathi", "sathee", "saathy", "saati", "saathi",
-    "sarty", "sarthy", "saathi", "sathi", "ps", "ps apps", "sp", "swati",
-    "psi", "sps", "sathi ho", "sat hi", "such he", "su hi",
+    "jarvo", "jarwo", "jarvu", "jarva", "garvo", "charvo", "jrvo", "jarvy",
+    "jharvo", "dwarvo", "jar vo", "jarbo", "jarvo ho", "jar vo bhai",
 ]
 
 
@@ -55,7 +54,7 @@ def _server_already_running() -> bool:
 
 def _launch_server_and_browser():
     if not _server_already_running():
-        print("🚀 Starting SAATHI server...")
+        print("🚀 Starting JARVO server...")
         # Use the same interpreter that's running this script (so it picks
         # up the active venv automatically).
         subprocess.Popen(
@@ -70,12 +69,12 @@ def _launch_server_and_browser():
             if _server_already_running():
                 break
     webbrowser.open(f"http://127.0.0.1:{PORT}")
-    print("✅ SAATHI is open.")
+    print("✅ JARVO is open.")
 
 
 def main():
-    print("👂 SAATHI wake-word listener running in the background.")
-    print('   Say "Hi SAATHI" any time to open the assistant.')
+    print("👂 JARVO wake-word listener running in the background.")
+    print('   Say "Hi JARVO" any time to open the assistant.')
     while True:
         try:
             audio = audio_io.record_until_silence(max_wait_for_speech=4.0)
@@ -85,7 +84,7 @@ def main():
             if not text:
                 continue
             if _heard_wake_word(text):
-                print(f'🎙  Wake word detected ("{text}") — launching SAATHI.')
+                print(f'🎙  Wake word detected ("{text}") — launching JARVO.')
                 _launch_server_and_browser()
                 # Short cooldown so it doesn't immediately re-trigger on the
                 # tail end of the same phrase or on the browser's own sounds.

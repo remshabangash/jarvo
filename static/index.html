@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SAATHI — AI Assistant</title>
+    <title>JARVO — AI Assistant</title>
     <style>
       :root {
         --bg: #07060d;
@@ -302,7 +302,7 @@
           transform: rotate(360deg);
         }
       }
-      /* equalizer bars DANCE while speaking — the SAATHI beat */
+      /* equalizer bars DANCE while speaking — the JARVO beat */
       #orbWrap.speaking #orb svg .bar {
         animation: eq 0.7s ease-in-out infinite;
         transform-origin: center;
@@ -823,7 +823,7 @@
           </svg>
         </div>
         <div>
-          <h1>SAATHI</h1>
+          <h1>JARVO</h1>
           <p>AI Voice Assistant</p>
         </div>
       </div>
@@ -1029,7 +1029,7 @@
           <div class="tool-card" data-cmd="screenshot lo">
             <div class="t-ico">📸</div>
             <b>Screenshot</b>
-            <span>Capture your screen — saved as PNG to Pictures\\SAATHI</span>
+            <span>Capture your screen — saved as PNG to Pictures\\JARVO</span>
           </div>
           <div class="tool-card" data-cmd="screen recording shuru karo">
             <div class="t-ico">🔴</div>
@@ -1217,7 +1217,7 @@
       /* ================= Sidebar navigation ================= */
       const TITLES = {
         chat: ["Chat", "Voice assistant — speak or type to get started"],
-        captures: ["Captures", "Screenshots & recordings — Pictures\\SAATHI"],
+        captures: ["Captures", "Screenshots & recordings — Pictures\\JARVO"],
         contacts: ["Contacts", "WhatsApp contacts — send a message by name"],
         tools: ["Quick Tools", "Common commands, one tap away"],
       };
@@ -1747,7 +1747,7 @@
         : "http://127.0.0.1:5000";
       const AGENT_URL = (
         agentParam ||
-        localStorage.getItem("saathiAgent") ||
+        localStorage.getItem("jarvoAgent") ||
         hostedAgent
       ).replace(/\/$/, "");
 
@@ -1755,22 +1755,22 @@
         return AGENT_URL ? AGENT_URL + path : path;
       }
 
-      // If the server has SAATHI_TOKEN set, every action call needs it.
+      // If the server has JARVO_TOKEN set, every action call needs it.
       // Ask once, remember it in this browser via localStorage.
       function getAuthToken() {
-        return localStorage.getItem("saathiToken") || "";
+        return localStorage.getItem("jarvoToken") || "";
       }
 
       // Persistent per-browser session id — the server keys chat history by
       // it, so this conversation survives page reloads and server restarts
       // (and never mixes with another device's chat).
       function getSessionId() {
-        let sid = localStorage.getItem("saathiSession");
+        let sid = localStorage.getItem("jarvoSession");
         if (!sid || !/^[A-Za-z0-9_-]{8,64}$/.test(sid)) {
           sid = crypto.randomUUID
             ? crypto.randomUUID().replace(/-/g, "")
             : Math.random().toString(36).slice(2) + Date.now().toString(36);
-          localStorage.setItem("saathiSession", sid);
+          localStorage.setItem("jarvoSession", sid);
         }
         return sid;
       }
@@ -1783,10 +1783,10 @@
         const res = await fetch(agentUrl(path), Object.assign({}, options, { headers }));
         if (res.status === 401) {
           const entered = window.prompt(
-            "This SAATHI server requires a token to act. Paste it here:"
+            "This JARVO server requires a token to act. Paste it here:"
           );
           if (entered) {
-            localStorage.setItem("saathiToken", entered.trim());
+            localStorage.setItem("jarvoToken", entered.trim());
             headers["X-Auth-Token"] = entered.trim();
             return fetch(agentUrl(path), Object.assign({}, options, { headers }));
           }
@@ -1806,9 +1806,9 @@
         try {
           const response = await fetch(agentUrl("/api/health"));
           if (!response.ok) throw new Error("agent unavailable");
-          setStatus("SAATHI agent connected");
+          setStatus("JARVO agent connected");
         } catch (e) {
-          setStatus("Start the SAATHI agent to begin");
+          setStatus("Start the JARVO agent to begin");
         }
       }
 
@@ -1851,16 +1851,16 @@
         } catch (e) {
           /* server unreachable — still reset the local view */
         }
-        localStorage.removeItem("saathiSession");
+        localStorage.removeItem("jarvoSession");
         getSessionId(); // mint + store a fresh one
         chat.innerHTML = "";
         document.getElementById("activity").innerHTML = "";
-        addMsg("Nayi shuruaat — SAATHI is ready. Tap the mic, speak, then wait for the reply.", "sys");
+        addMsg("Nayi shuruaat — JARVO is ready. Tap the mic, speak, then wait for the reply.", "sys");
         setStatus("Tap the mic or type a message");
       }
 
       addMsg(
-        "SAATHI is ready. Tap the mic, speak, then wait for the reply.",
+        "JARVO is ready. Tap the mic, speak, then wait for the reply.",
         "sys",
       );
       checkAgent();

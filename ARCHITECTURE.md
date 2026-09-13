@@ -1,4 +1,4 @@
-# SAATHI — System Architecture
+# JARVO — System Architecture
 
 > Multilingual (Urdu / English / Pashto) voice assistant — Mic → Whisper STT →
 > LLM Brain (tool-use) → Task Executor → TTS. 100% free stack (Groq free tier,
@@ -34,7 +34,7 @@ flowchart TD
         WEB[Web UI :5000<br/>Flask Server.py<br/>red-black orb + activity strip]
         TK[Tkinter gui.py]
         CLI[main.py voice/text loop]
-        WAKE[👂 wake_listener.py<br/>'Hi SAATHI' autostart]
+        WAKE[👂 wake_listener.py<br/>'Hi JARVO' autostart]
     end
     UI --> BRAIN
 ```
@@ -61,11 +61,11 @@ flowchart TD
 | **Executor** | `executor.py` | Dispatch: WhatsApp / email / open_app (6-level resolution) / web_search / screen tools |
 | **WhatsApp** | `whatsapp_bot.py` | Persistent pre-loaded Edge; in-app search (no reload); header verify; send verify; wa.me last resort |
 | **Email** | `email_sender.py` | Gmail SMTP app-password; name→address resolution; spam-safe headers |
-| **Screen** | `screen_tools.py` | mss screenshots; OpenCV MP4 recording (tick-paced, 5-min cap) → `~/Pictures/SAATHI` |
+| **Screen** | `screen_tools.py` | mss screenshots; OpenCV MP4 recording (tick-paced, 5-min cap) → `~/Pictures/JARVO` |
 | **TTS** | `tts.py` | edge-tts ur/en/ps voices; serialized overlap-safe playback |
 | **Web UI** | `Server.py` + `static/index.html` | Flask API + red-black UI: orb, equalizer beats, agent activity strip, captures gallery |
 | **Desktop** | `gui.py` | Tkinter window (background-thread pipeline) |
-| **Wake word** | `wake_listener.py` | "Hi SAATHI" background listener → starts server + opens browser |
+| **Wake word** | `wake_listener.py` | "Hi JARVO" background listener → starts server + opens browser |
 | **Config** | `config.py` | Models, voices, mic thresholds, contacts |
 
 ## Key design decisions (kyun)

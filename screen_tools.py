@@ -20,7 +20,7 @@ import config
 
 # Save to the laptop's standard Pictures library (easy to find in File
 # Explorer sidebar), NOT inside the project folder.
-SHOTS_DIR = os.path.join(os.path.expanduser("~"), "Pictures", "SAATHI")
+SHOTS_DIR = os.path.join(os.path.expanduser("~"), "Pictures", "JARVO")
 os.makedirs(SHOTS_DIR, exist_ok=True)
 
 
@@ -32,7 +32,7 @@ def _save_path(prefix: str, ext: str) -> str:
     try:
         os.makedirs(d, exist_ok=True)
     except Exception:
-        d = os.path.join(tempfile.gettempdir(), "SAATHI_captures")
+        d = os.path.join(tempfile.gettempdir(), "JARVO_captures")
         os.makedirs(d, exist_ok=True)
     return os.path.join(d, f"{prefix}_{stamp}.{ext}")
 

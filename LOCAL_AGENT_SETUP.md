@@ -1,11 +1,11 @@
-# SAATHI local agent
+# JARVO local agent
 
-SAATHI can be used with a separately hosted web page while actions still run on each user's own computer.
+JARVO can be used with a separately hosted web page while actions still run on each user's own computer.
 
 ## How it works
 
 1. The user starts this Python app locally.
-2. The user opens the hosted SAATHI page.
+2. The user opens the hosted JARVO page.
 3. The page automatically calls `http://127.0.0.1:5000` as the local agent.
 4. WhatsApp, browser automation, screenshots, microphone capture, TTS, and app launching happen on that user's computer.
 
@@ -23,7 +23,7 @@ Python 3.10 or newer is recommended.
 
 Download the project, unzip it, and double-click `install_windows.bat`. The
 script creates the virtual environment, installs dependencies, asks for the
-Groq key, starts the local agent, and opens the local SAATHI page. It does not
+Groq key, starts the local agent, and opens the local JARVO page. It does not
 open WhatsApp automatically.
 
 After setup, users can double-click `install_windows.bat` again to start the
@@ -49,7 +49,7 @@ pip install -r requirements.txt
 python3 Server.py
 ```
 
-The included `start_saathi.sh` performs the final configuration prompt and
+The included `start_jarvo.sh` performs the final configuration prompt and
 starts the local server after the dependencies have been installed.
 
 Create `.env` with at least:
@@ -67,7 +67,7 @@ curl http://127.0.0.1:5000/api/health
 Expected response:
 
 ```json
-{ "agent": "saathi", "ok": true, "service": "local" }
+{ "agent": "jarvo", "ok": true, "service": "local" }
 ```
 
 ## Hosted frontend

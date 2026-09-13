@@ -1,4 +1,4 @@
-"""SAATHI WhatsApp doctor — one command, tells you EXACTLY what is broken.
+"""JARVO WhatsApp doctor — one command, tells you EXACTLY what is broken.
 
 Run:
     venv\\Scripts\\python wa_doctor.py
@@ -20,7 +20,7 @@ import whatsapp_bot
 
 def main():
     print("=" * 56)
-    print("  SAATHI — WhatsApp Doctor")
+    print("  JARVO — WhatsApp Doctor")
     print("=" * 56)
 
     print("\n[1/4] Edge browser launch (persistent profile)...")
@@ -64,7 +64,7 @@ def main():
         name = sys.argv[1]
         print(f"\n[TEST SEND] '{name}' ko test message bhej raha hoon...")
         try:
-            result = whatsapp_bot.send_message(name, "SAATHI test — WhatsApp link verified ✅")
+            result = whatsapp_bot.send_message(name, "JARVO test — WhatsApp link verified ✅")
             print(f"      SUCCESS: {result}")
         except Exception as e:
             print(f"      FAIL: {e}")

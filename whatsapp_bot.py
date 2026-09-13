@@ -42,7 +42,7 @@ from selenium.common.exceptions import TimeoutException
 
 import subprocess
 
-EDGE_PROFILE = os.path.join(os.path.expanduser("~"), "saathi_edge_profile")
+EDGE_PROFILE = os.path.join(os.path.expanduser("~"), "saathi_edge_profile")  # legacy folder name kept — renaming would orphan the saved WhatsApp login
 CONTACTS_FILE = os.path.join(os.path.dirname(__file__), "contacts.json")
 ERROR_SHOT = os.path.join(os.path.dirname(__file__), "wa_error.png")
 WA_HOME = "https://web.whatsapp.com"

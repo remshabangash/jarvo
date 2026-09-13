@@ -6,7 +6,7 @@ import chat_store
 
 @pytest.fixture()
 def store(tmp_path):
-    chat_store.reset_for_tests(str(tmp_path / "test_saathi.db"))
+    chat_store.reset_for_tests(str(tmp_path / "test_jarvo.db"))
     yield chat_store
     chat_store.reset_for_tests()  # restore default path
 

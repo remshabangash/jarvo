@@ -1,10 +1,10 @@
 @echo off
 setlocal EnableExtensions
 cd /d "%~dp0"
-title SAATHI Setup
+title JARVO Setup
 
 echo ================================================
-echo              SAATHI - First-time setup
+echo              JARVO - First-time setup
 echo ================================================
 echo.
 
@@ -28,7 +28,7 @@ if not exist "venv\Scripts\python.exe" (
     if errorlevel 1 goto :failed
 )
 
-echo Installing SAATHI dependencies...
+echo Installing JARVO dependencies...
 venv\Scripts\python.exe -m pip install --upgrade pip
 venv\Scripts\python.exe -m pip install -r requirements.txt
 if errorlevel 1 goto :failed
@@ -38,7 +38,7 @@ if not exist ".env" (
     echo Enter your Groq API key. It will be saved only in this folder.
     set /p "GROQ_API_KEY=GROQ_API_KEY: "
     if not defined GROQ_API_KEY (
-        echo A Groq API key is required to use SAATHI.
+        echo A Groq API key is required to use JARVO.
         pause
         exit /b 1
     )
@@ -46,8 +46,8 @@ if not exist ".env" (
 )
 
 echo.
-echo Setup complete. Starting SAATHI...
-start "SAATHI" http://127.0.0.1:5000
+echo Setup complete. Starting JARVO...
+start "JARVO" http://127.0.0.1:5000
 venv\Scripts\python.exe server.py
 exit /b %ERRORLEVEL%
 

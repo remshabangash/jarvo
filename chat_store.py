@@ -20,7 +20,7 @@ import sqlite3
 import threading
 import time
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "saathi.db")
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "jarvo.db")
 
 # Same window size the old in-memory history used (del history[:-10]).
 HISTORY_LIMIT = 10

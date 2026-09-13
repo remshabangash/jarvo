@@ -49,7 +49,7 @@ def _play(path: str) -> None:
 
 
 def _temp_mp3_path() -> str:
-    return os.path.join(tempfile.gettempdir(), f"saathi_tts_{uuid.uuid4().hex}.mp3")
+    return os.path.join(tempfile.gettempdir(), f"jarvo_tts_{uuid.uuid4().hex}.mp3")
 
 
 def prepare(text: str, lang: str = "en") -> None:

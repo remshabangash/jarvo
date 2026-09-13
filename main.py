@@ -1,4 +1,4 @@
-"""SAATHI — multilingual voice assistant main loop.
+"""JARVO — multilingual voice assistant main loop.
 
 Pipeline: Mic → Whisper STT → LLM brain (tools) → Executor → TTS
 Run:  venv\\Scripts\\python main.py            (voice mode)
@@ -46,7 +46,7 @@ def _warmup():
     First real command then skips ~2-4s of one-time initialization cost.
     """
     try:
-        tts.prepare("SAATHI ready.", "en")
+        tts.prepare("JARVO ready.", "en")
     except Exception:
         pass
     try:
@@ -85,7 +85,7 @@ def handle_input(text: str, history: list) -> bool:
         print(f"⚠  Error: {str(e)[:80]}")
         reply = FALLBACKS[len(history) % len(FALLBACKS)]
 
-    print(f"🤖 SAATHI: {reply}")
+    print(f"🤖 JARVO: {reply}")
 
     history.append({"role": "user", "content": text})
     history.append({"role": "assistant", "content": reply})
@@ -147,7 +147,7 @@ def text_loop():
 
 def main():
     print("=" * 52)
-    print("  SAATHI — Voice Assistant (Urdu / English / Pashto)")
+    print("  JARVO — Voice Assistant (Urdu / English / Pashto)")
     print("=" * 52)
 
     set_pre_speech(lambda text: tts.speak(text, "ur"))

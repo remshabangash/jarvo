@@ -1,4 +1,4 @@
-# SAATHI WhatsApp one-time login: saves session so voice commands never need QR again
+# JARVO WhatsApp one-time login: saves session so voice commands never need QR again
 import sys
 
 if hasattr(sys.stdout, "reconfigure"):

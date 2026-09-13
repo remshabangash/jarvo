@@ -1,11 +1,11 @@
-# SAATHI — Multilingual Voice Assistant
+# JARVO — Multilingual Voice Assistant
 
-[![CI](https://github.com/remshabangash/saathi-hackathon/actions/workflows/ci.yml/badge.svg)](https://github.com/remshabangash/saathi-hackathon/actions/workflows/ci.yml)
+[![CI](https://github.com/remshabangash/jarvo/actions/workflows/ci.yml/badge.svg)](https://github.com/remshabangash/jarvo/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.13-blue)
 ![Tests](https://img.shields.io/badge/tests-95%20passing-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
 
-Speak in **Urdu, English, or Pashto** — SAATHI listens, understands free-form
+Speak in **Urdu, English, or Pashto** — JARVO listens, understands free-form
 intent, and actually *does things* on your computer: opens apps, sends
 WhatsApp messages and emails, takes screenshots, records the screen, and
 drives a browser. 100% free stack, no paid APIs.
@@ -22,7 +22,7 @@ drives a browser. 100% free stack, no paid APIs.
 | 💬 WhatsApp | *"Ahmed ko hello bhejo"* | Real send through a pre-loaded, persistent WhatsApp Web session with header + send verification |
 | 📧 Email | *"Remsha ko email bhejo"* | Gmail SMTP with contact-name resolution |
 | 🌐 Controlled browser | *"...is par click karo, neeche scroll karo"* | Follow-up commands act on the same Selenium-driven page across turns |
-| 📸 Screen capture | *"screenshot le lo"*, *"recording shuru karo"* | PNG + MP4 (real-time paced), saved to `Pictures/SAATHI` |
+| 📸 Screen capture | *"screenshot le lo"*, *"recording shuru karo"* | PNG + MP4 (real-time paced), saved to `Pictures/JARVO` |
 | 🗂️ Save contacts by voice | *"Ali ka number save karo 9230..."* | Confirms digits back, then writes WhatsApp/email contacts atomically |
 | 💾 Remembers the conversation | — | Chat history persists in SQLite per device/session — survives restarts and reloads |
 | 🌍 Three languages | Urdu / English / Pashto | Roman-Urdu transcription handling, native Pashto TTS voice, per-reply voice selection |
@@ -54,7 +54,7 @@ venv\Scripts\python Server.py        # web UI → http://localhost:5000
 ```
 
 Keys are free: [console.groq.com/keys](https://console.groq.com/keys) (LLM +
-STT). Optional: Gmail **App Password** for email, `SAATHI_TOKEN` for web
+STT). Optional: Gmail **App Password** for email, `JARVO_TOKEN` for web
 authentication.
 
 ## How it stays fast (demo secrets)
@@ -101,10 +101,10 @@ venv\Scripts\python -m pytest tests/ -v
 ## Security notes
 
 - The web server binds **127.0.0.1 by default** — only this laptop can reach it.
-  To serve other devices on your WiFi, set `SAATHI_HOST=0.0.0.0` and **set
-  `SAATHI_TOKEN`** in `.env`; the web UI will prompt for the token once and
+  To serve other devices on your WiFi, set `JARVO_HOST=0.0.0.0` and **set
+  `JARVO_TOKEN`** in `.env`; the web UI will prompt for the token once and
   sign every request.
-- Personal files (`.env`, `contacts.json`, `email_contacts.json`, `saathi.db`)
+- Personal files (`.env`, `contacts.json`, `email_contacts.json`, `jarvo.db`)
   are gitignored — templates live in the repo, real data stays on your machine.
 - Voice-saved contacts and all sends require spoken confirmation first.
 

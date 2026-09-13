@@ -1,9 +1,9 @@
 """winfocus.py — force a just-opened window to the foreground.
 
 Windows normally blocks background processes from "stealing" focus — when
-SAATHI opens WhatsApp, Notepad, a browser tab, etc., Windows only flashes
+JARVO opens WhatsApp, Notepad, a browser tab, etc., Windows only flashes
 its taskbar icon instead of bringing it to the front. This uses the
-standard AttachThreadInput trick to work around that, so things SAATHI
+standard AttachThreadInput trick to work around that, so things JARVO
 opens actually show up on screen instead of needing a manual taskbar click.
 
 Best-effort only: if the window can't be found (wrong title guess, app is

@@ -3,7 +3,7 @@ set -eu
 cd "$(dirname "$0")"
 
 if [ ! -x ".venv/bin/python" ]; then
-  echo "SAATHI is not installed yet. Run:"
+  echo "JARVO is not installed yet. Run:"
   echo "  python3 -m venv .venv && .venv/bin/python -m pip install -r requirements.txt"
   exit 1
 fi

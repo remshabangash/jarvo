@@ -20,7 +20,7 @@ import whatsapp_bot
 
 def _deep_link_rehearsal(d, phone: str) -> int:
     digits = whatsapp_bot.digits_fmt(phone)
-    test_text = "SAATHI rehearsal - ye message SEND NAHI hoga"
+    test_text = "JARVO rehearsal - ye message SEND NAHI hoga"
     print(f"      wa.me deep link: ...send?phone={digits}&text=...")
     d.get(f"https://web.whatsapp.com/send?phone={digits}&text={test_text}")
     box = None
@@ -49,7 +49,7 @@ def _deep_link_rehearsal(d, phone: str) -> int:
 
 def rehearsal(contact: str) -> int:
     print("=" * 56)
-    print(f"  SAATHI WhatsApp REHEARSAL (send ke baghair) — '{contact}'")
+    print(f"  JARVO WhatsApp REHEARSAL (send ke baghair) — '{contact}'")
     print("=" * 56)
 
     print("\n[1/4] Contact resolution...")
@@ -98,7 +98,7 @@ def rehearsal(contact: str) -> int:
         if go_ahead in ("haan", "han", "yes", "y"):
             try:
                 result = whatsapp_bot.send_message(
-                    contact, "SAATHI test - WhatsApp link verified")
+                    contact, "JARVO test - WhatsApp link verified")
                 print(f"📤 SUCCESS: {result}")
             except whatsapp_bot.WaError as e:
                 print(f"❌ FAIL: {e}")

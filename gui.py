@@ -1,5 +1,5 @@
 """
-gui.py — SAATHI desktop window (replaces the plain command-prompt loop).
+gui.py — JARVO desktop window (replaces the plain command-prompt loop).
 
 Run this instead of `python main.py`:
     venv\\Scripts\\python gui.py
@@ -31,10 +31,10 @@ USER_BUBBLE = "#2a2f3a"
 BOT_BUBBLE = "#22314f"
 
 
-class SaathiGUI:
+class JarvoGUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("SAATHI")
+        self.root.title("JARVO")
         self.root.geometry("480x680")
         self.root.configure(bg=BG)
         self.history = []
@@ -47,7 +47,7 @@ class SaathiGUI:
     def _build_ui(self):
         header = tk.Frame(self.root, bg=BG, pady=16)
         header.pack(fill="x")
-        tk.Label(header, text="SAATHI", font=("Segoe UI", 20, "bold"),
+        tk.Label(header, text="JARVO", font=("Segoe UI", 20, "bold"),
                  fg=TEXT, bg=BG).pack()
         tk.Label(header, text="اردو (پاکستانی)  •  English",
                  font=("Segoe UI", 10), fg=SUBTLE, bg=BG).pack(pady=(2, 0))
@@ -96,7 +96,7 @@ class SaathiGUI:
                               font=("Segoe UI", 11, "bold"), width=3)
         send_btn.pack(side="right")
 
-        self._append_system("SAATHI ready. Mic dabayen ya type karen.")
+        self._append_system("JARVO ready. Mic dabayen ya type karen.")
 
     # ---------------- Chat helpers ----------------
     def _append_system(self, text):
@@ -114,7 +114,7 @@ class SaathiGUI:
 
     def _append_bot(self, text):
         self.chat.configure(state="normal")
-        self.chat.insert("end", f"SAATHI\n", "user")
+        self.chat.insert("end", f"JARVO\n", "user")
         self.chat.insert("end", f"{text}\n\n", "bot")
         self.chat.configure(state="disabled")
         self.chat.see("end")
@@ -197,7 +197,7 @@ class SaathiGUI:
 
 def main():
     root = tk.Tk()
-    SaathiGUI(root)
+    JarvoGUI(root)
     root.mainloop()
 
 
