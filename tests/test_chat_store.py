@@ -86,3 +86,33 @@ class TestActivity:
         store.record_activity("s2", "tool_b")
         assert store.get_activity("s1")[0]["tool"] == "tool_a"
         assert store.get_activity("s2")[0]["tool"] == "tool_b"
+
+
+class TestClearSession:
+    def test_clears_messages_activity_and_row(self, store):
+        store.touch_session("s1")
+        store.append_message("s1", "user", "hello")
+        store.record_activity("s1", "open_app")
+        store.clear_session("s1")
+        assert store.get_history("s1") == []
+        assert store.get_activity("s1") == []
+        with store._connect() as conn:
+            n = conn.execute("SELECT COUNT(*) FROM sessions WHERE session_id='s1'").fetchone()[0]
+        assert n == 0
+
+    def test_other_sessions_untouched(self, store):
+        store.append_message("s1", "user", "keep me")
+        store.append_message("s2", "user", "also keep me")
+        store.record_activity("s1", "tool1")
+        store.record_activity("s2", "tool2")
+        store.clear_session("s1")
+        assert [m["content"] for m in store.get_history("s2")] == ["also keep me"]
+        assert store.get_activity("s2")[0]["tool"] == "tool2"
+        assert store.get_history("s1") == []
+
+    def test_clear_then_reuse_fresh(self, store):
+        store.append_message("s1", "user", "old")
+        store.clear_session("s1")
+        store.append_message("s1", "user", "new")
+        hist = store.get_history("s1")
+        assert len(hist) == 1 and hist[0]["content"] == "new"

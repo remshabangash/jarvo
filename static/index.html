@@ -560,6 +560,25 @@
       #sendBtn:active {
         transform: scale(0.92);
       }
+      #newChatBtn {
+        display: block;
+        margin: 6px auto 0;
+        padding: 4px 12px;
+        font-size: 12px;
+        background: transparent;
+        color: var(--muted, #9b93b3);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 999px;
+        cursor: pointer;
+        opacity: 0.75;
+        transition: opacity 0.15s, border-color 0.15s;
+      }
+
+      #newChatBtn:hover {
+        opacity: 1;
+        border-color: rgba(255, 255, 255, 0.35);
+      }
+
       #sendBtn:disabled {
         opacity: 0.45;
         cursor: not-allowed;
@@ -989,6 +1008,7 @@
             />
             <button id="sendBtn">➤</button>
           </div>
+          <button id="newChatBtn" type="button" title="Clear this conversation and start fresh">🧹 New chat</button>
         </div>
       </div>
 
@@ -1792,6 +1812,9 @@
         }
       }
 
+      const newChatBtn = document.getElementById("newChatBtn");
+      newChatBtn.addEventListener("click", newChat);
+
       micBtn.addEventListener("click", onMic);
       sendBtn.addEventListener("click", () => {
         sendText(textInput.value.trim());
@@ -1818,6 +1841,23 @@
           /* history restore is best-effort */
         }
       })();
+
+      // "New chat": wipe this session server-side, mint a fresh session id,
+      // and clear the on-screen transcript.
+      async function newChat() {
+        if (busy) return;
+        try {
+          await authedFetch("/api/history", { method: "DELETE" });
+        } catch (e) {
+          /* server unreachable — still reset the local view */
+        }
+        localStorage.removeItem("saathiSession");
+        getSessionId(); // mint + store a fresh one
+        chat.innerHTML = "";
+        document.getElementById("activity").innerHTML = "";
+        addMsg("Nayi shuruaat — SAATHI is ready. Tap the mic, speak, then wait for the reply.", "sys");
+        setStatus("Tap the mic or type a message");
+      }
 
       addMsg(
         "SAATHI is ready. Tap the mic, speak, then wait for the reply.",

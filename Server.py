@@ -72,7 +72,7 @@ def add_agent_cors(response):
     """Allow a separately hosted frontend to call this user's local agent."""
     response.headers.setdefault("Access-Control-Allow-Origin", "*")
     response.headers.setdefault("Access-Control-Allow-Headers", "Content-Type, X-Auth-Token")
-    response.headers.setdefault("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+    response.headers.setdefault("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
     response.headers.setdefault("Access-Control-Allow-Private-Network", "true")
     return response
 
@@ -242,6 +242,15 @@ def api_history():
     chat_store.touch_session(session_id)
     return jsonify({"ok": True, "session": session_id,
                     "messages": chat_store.get_history(session_id)})
+
+
+@app.route("/api/history", methods=["DELETE"])
+def api_history_delete():
+    """"New chat": wipe this session's stored conversation and activity.
+    Other sessions are untouched. The UI then mints a fresh session id."""
+    session_id = _get_session_id()
+    chat_store.clear_session(session_id)
+    return jsonify({"ok": True, "session": session_id})
 
 
 def _think_safely(text: str, session_id: str) -> str:

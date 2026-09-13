@@ -181,6 +181,18 @@ def record_activity(session_id: str, tool: str, detail: str = "", ok: bool = Tru
         _close(conn)
 
 
+def clear_session(session_id: str) -> None:
+    """Remove a session's history, activity, and row ("New chat" button).
+    Other sessions are untouched."""
+    _init()
+    conn = _connect()
+    try:
+        for table in ("messages", "activity", "sessions"):
+            conn.execute(f"DELETE FROM {table} WHERE session_id = ?", (session_id,))
+    finally:
+        _close(conn)
+
+
 def get_activity(session_id: str, limit: int = 6) -> list[dict]:
     """Last `limit` tool runs for the session, oldest first (matches the old
     activity_log[-6:] shape the UI expects: {tool, detail, ok, t})."""
