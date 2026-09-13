@@ -16,17 +16,22 @@ import whatsapp_bot
 
 
 def detect_script(s: str) -> str:
-    """Pick TTS voice from the reply text's script: Pashto → Urdu → English."""
+    """Pick TTS voice from the reply text's script: Pashto → Urdu → English.
+
+    Script presence beats position: an Urdu/Arabic-script char ANYWHERE in the
+    reply selects the Urdu voice (an English word at the start like "Ok," or
+    "WhatsApp" must not make the whole Urdu sentence be read in English).
+    """
     # Pashto-only letters (not used in Urdu) get the Pashto voice
     if any(c in "ږړښڼڅژډټ" for c in s):
         return "ps"
+    has_urdu = False
     for ch in s:
         o = ord(ch)
         if 0x0600 <= o <= 0x06FF or 0x0750 <= o <= 0x077F:
-            return "ur"
-        if ch.isascii() and ch.isalpha():
-            return "en"
-    return "en"
+            has_urdu = True
+            break
+    return "ur" if has_urdu else "en"
 
 
 FALLBACKS = [

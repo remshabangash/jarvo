@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}   # manual run button
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # Dummy keys so importing modules never hits the real API in CI
+      GROQ_API_KEY: gsk-DUMMY-KEY-FOR-CI
+      GROQ_API_KEY_STT: gsk-DUMMY-KEY-FOR-CI
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Syntax check (compile all modules)
+        run: |
+          python -m py_compile main.py Server.py gui.py wake_listener.py \
+            brain.py executor.py stt.py tts.py audio_io.py config.py \
+            email_sender.py screen_tools.py whatsapp_bot.py whatsapp_login.py \
+            browser_bot.py winfocus.py youtube_download.py \
+            app_resolver/__init__.py app_resolver/_common.py \
+            app_resolver/windows.py app_resolver/macos.py app_resolver/linux.py
+
+      - name: Run offline unit tests
+        run: pytest tests/ -v --tb=short
