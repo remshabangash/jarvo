@@ -10,6 +10,41 @@ import config
 
 _cached_threshold = None  # measured once, reused every turn (was re-measuring every call)
 
+_device_resolved = False
+_device_index = None
+
+
+def _resolve_device():
+    """Resolve config.JARVO_MIC_DEVICE to a valid input device index.
+
+    Accepts an int index (from mic_test.py) or a name substring string.
+    Returns None (= OS default) if unset, invalid, or the device vanished —
+    so a stale pin degrades to the default mic instead of crashing.
+    """
+    global _device_resolved, _device_index
+    if _device_resolved:
+        return _device_index
+    dev = config.JARVO_MIC_DEVICE
+    idx = None
+    if isinstance(dev, int):
+        try:
+            if sd.query_devices(dev)["max_input_channels"] > 0:
+                idx = dev
+            else:
+                print(f"⚠  JARVO_MIC_DEVICE={dev} input device nahi — default mic use ho raha hai")
+        except Exception:
+            print(f"⚠  JARVO_MIC_DEVICE={dev} nahi mila — default mic use ho raha hai")
+    elif dev:
+        for i, d in enumerate(sd.query_devices()):
+            if d["max_input_channels"] > 0 and str(dev).lower() in d["name"].lower():
+                idx = i
+                break
+        if idx is None:
+            print(f"⚠  Mic '{dev}' nahi mila — default mic use ho raha hai")
+    _device_resolved = True
+    _device_index = idx
+    return idx
+
 
 def calibrate_ambient(duration: float = None, force: bool = False) -> float:
     """Measure ambient noise floor for a moment; returns calibrated RMS.
@@ -30,7 +65,8 @@ def calibrate_ambient(duration: float = None, force: bool = False) -> float:
         frames.append(indata.copy())
 
     with sd.InputStream(samplerate=config.SAMPLE_RATE, channels=1,
-                        dtype="int16", blocksize=chunk, callback=cb):
+                        dtype="int16", blocksize=chunk, callback=cb,
+                        device=_resolve_device()):
         sd.sleep(int(duration * 1000))
 
     if not frames:
@@ -94,7 +130,8 @@ def record_until_silence(max_wait_for_speech: float = 6.0):
         frames.append(indata.copy())
 
     with sd.InputStream(samplerate=config.SAMPLE_RATE, channels=1,
-                        dtype="int16", blocksize=chunk, callback=callback):
+                        dtype="int16", blocksize=chunk, callback=callback,
+                        device=_resolve_device()):
         processed = 0
         while processed < max_frames:
             if processed >= len(frames):

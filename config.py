@@ -28,6 +28,15 @@ TTS_VOICES = {
 }
 
 # Audio capture
+# Optional mic device override — index from mic_test.py output.
+# Windows often defaults to a dead/external mic endpoint (e.g. an unplugged
+# jack); pin the working device so listening always uses the live mic.
+JARVO_MIC_DEVICE = os.getenv("JARVO_MIC_DEVICE")
+if JARVO_MIC_DEVICE is not None and JARVO_MIC_DEVICE.strip().isdigit():
+    JARVO_MIC_DEVICE = int(JARVO_MIC_DEVICE.strip())
+else:
+    JARVO_MIC_DEVICE = None  # None = OS default
+
 SAMPLE_RATE = 16000
 SILENCE_RMS = 250          # fallback floor; real threshold is calibrated from ambient noise
 SILENCE_SECONDS = 1.2      # end-of-turn silence — was 0.9s, cutting off mid-sentence
