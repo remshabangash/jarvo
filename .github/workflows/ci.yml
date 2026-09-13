@@ -15,6 +15,8 @@ jobs:
       # Dummy keys so importing modules never hits the real API in CI
       GROQ_API_KEY: gsk-DUMMY-KEY-FOR-CI
       GROQ_API_KEY_STT: gsk-DUMMY-KEY-FOR-CI
+      # No GEMINI_API_KEY here on purpose: STT_PROVIDER defaults to "auto",
+      # tests must exercise the Whisper path (and the Gemini fallback logic).
 
     steps:
       - uses: actions/checkout@v4
@@ -33,7 +35,7 @@ jobs:
       - name: Syntax check (compile all modules)
         run: |
           python -m py_compile main.py Server.py gui.py wake_listener.py \
-            brain.py executor.py stt.py tts.py audio_io.py config.py \
+            brain.py executor.py stt.py stt_gemini.py tts.py audio_io.py config.py \
             email_sender.py screen_tools.py whatsapp_bot.py whatsapp_login.py \
             browser_bot.py winfocus.py \
             app_resolver/__init__.py app_resolver/_common.py \

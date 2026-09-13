@@ -1,8 +1,9 @@
 # JARVO — System Architecture
 
-> Multilingual (Urdu / English / Pashto) voice assistant — Mic → Whisper STT →
-> LLM Brain (tool-use) → Task Executor → TTS. 100% free stack (Groq free tier,
-> edge-tts, Selenium, mss/OpenCV).
+> Multilingual (Urdu / English / Pashto) voice assistant — Mic → STT (Gemini 3.5
+> Transcribe with Whisper fallback) → LLM Brain (tool-use) → Task Executor →
+> TTS. 100% free stack (Groq free tier, optional Google free tier, edge-tts,
+> Selenium, mss/OpenCV).
 
 ---
 
@@ -11,7 +12,7 @@
 ```mermaid
 flowchart TD
     U[👤 User speaks] --> MIC[🎤 audio_io.record_until_silence<br/>ambient-calibrated threshold<br/>leading-silence trim + loudness normalize]
-    MIC -->|int16 audio| STT[🗣️ stt.py — Groq Whisper large-v3<br/>Roman-Urdu mode + misfire remap<br/>contact-name bias prompt]
+    MIC -->|int16 audio| STT[🗣️ stt.py — dispatch<br/>Gemini 3.5 Transcribe primary<br/>Whisper fallback on any error<br/>Roman-Urdu mode + word fixes]
     STT -->|text| BRAIN{🧠 brain.py — Groq LLM<br/>gpt-oss-20b → 120b fallback}
 
     BRAIN -->|tool call| GUARD{{Safety layer:<br/>capture-intent force<br/>header-verify gate}}
@@ -43,8 +44,8 @@ flowchart TD
 
 ```
  ┌──────────┐   ┌───────────────┐   ┌──────────────────┐   ┌───────────────────┐   ┌─────────────┐
- │  🎤 MIC  │ → │ Whisper STT   │ → │ LLM BRAIN + TOOLS│ → │  TASK EXECUTOR    │ → │ 🔊 TTS OUT  │
- │ audio_io │   │ (Groq cloud)  │   │ gpt-oss-20b/120b │   │ wa/email/app/shot │   │  (edge-tts) │
+ │  🎤 MIC  │ → │ STT (Gemini → │ → │ LLM BRAIN + TOOLS│ → │  TASK EXECUTOR    │ → │ 🔊 TTS OUT  │
+ │ audio_io │   │  Whisper fb)  │   │ gpt-oss-20b/120b │   │ wa/email/app/shot │   │  (edge-tts) │
  └──────────┘   └───────────────┘   └──────────────────┘   └───────────────────┘   └─────────────┘
       ↑            auto lang-detect      free-form intent        real actions on        voice reply in
       │            + Roman-Urdu mode     NO fixed commands       the laptop             user's language
@@ -56,7 +57,7 @@ flowchart TD
 | Layer | File | Kya karta hai |
 |---|---|---|
 | **Audio in** | `audio_io.py` | Ambient-calibrated silence detection, leading-silence trim, loudness normalization |
-| **STT** | `stt.py` | Groq Whisper large-v3; Roman-Urdu mode; hi/ar→ur remap; contact-name bias prompt |
+| **STT** | `stt.py` + `stt_gemini.py` | Gemini 3.5 Transcribe primary (verbatim instruction + contact vocab hints, 85+ lang auto-detect), automatic Whisper large-v3 fallback on any Gemini error; Roman-Urdu mode; misfire remap; word fixes on both engines |
 | **Brain** | `brain.py` | LLM tool-use (free-form intent). Pending send confirmations (WhatsApp + email), capture-intent safety net, deterministic screen replies |
 | **Executor** | `executor.py` | Dispatch: WhatsApp / email / open_app (6-level resolution) / web_search / screen tools |
 | **WhatsApp** | `whatsapp_bot.py` | Persistent pre-loaded Edge; in-app search (no reload); header verify; send verify; wa.me last resort |

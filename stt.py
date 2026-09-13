@@ -13,6 +13,7 @@ import numpy as np
 from groq import Groq
 
 import config
+import stt_gemini as _gemini
 
 _client = Groq(api_key=config.GROQ_API_KEY_STT)
 
@@ -167,7 +168,35 @@ def _normalize(text: str) -> str:
 
 
 def transcribe(audio) -> tuple[str, str]:
-    """Transcribe int16 audio array. Returns (text, language_code)."""
+    """Transcribe int16 audio array. Returns (text, language_code).
+
+    STT_PROVIDER (config): "auto" = Gemini when GEMINI_API_KEY is set,
+    Whisper on any Gemini failure (network/Google outage = zero downtime);
+    "gemini" = Gemini only; "whisper" = Whisper only (default legacy path).
+    Both engines return verbatim transcripts in our (text, lang) contract;
+    Gemini's output goes through the same _WORD_FIXES normalization.
+    """
+    if config.STT_PROVIDER in ("auto", "gemini"):
+        try:
+            got = _gemini_attempt(audio)
+            if got is not None:
+                return got
+        except Exception as e:
+            print(f"⚠ Gemini STT failed ({str(e)[:60]}) — Whisper fallback...")
+            if config.STT_PROVIDER == "gemini":
+                raise
+    return _whisper_transcribe(audio)
+
+
+def _gemini_attempt(audio) -> tuple[str, str] | None:
+    """Try Gemini; None = no key configured (auto mode falls through)."""
+    if not config.GEMINI_API_KEY:
+        return None
+    text, lang = _gemini.transcribe_wav_bytes(_to_wav_bytes(audio))
+    return _normalize(text), lang
+
+
+def _whisper_transcribe(audio) -> tuple[str, str]:
     text, lang = _transcribe_raw(audio)
     return _normalize(text), lang
 

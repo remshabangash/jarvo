@@ -11,3 +11,6 @@ saathi.db-wal
 saathi.db-shm
 saathi.db
 .freebuff/
+jarvo.db
+jarvo.db-wal
+jarvo.db-shm

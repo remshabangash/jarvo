@@ -9,6 +9,16 @@ GROQ_MODEL = "openai/gpt-oss-20b"
 FALLBACK_MODEL = "openai/gpt-oss-120b"
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
+# Optional Gemini STT (gemini-3.5-transcribe) — more accurate than Whisper
+# for Urdu/Pashto accents (85+ language auto-detect, 2.6% WER, custom vocab).
+# Get a free key: https://aistudio.google.com/apikey
+# STT_PROVIDER: "auto" = Gemini when key present (Whisper fallback on any
+#                     Gemini error — a Google outage never stops the assistant),
+#               "gemini" = Gemini only, "whisper" = Whisper only
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_STT_MODEL = os.getenv("GEMINI_STT_MODEL", "gemini-3.5-transcribe")
+STT_PROVIDER = os.getenv("STT_PROVIDER", "auto").strip().lower()
+
 # STT (Groq-hosted Whisper; no local download needed).
 # IMPORTANT: uses its own API key (GROQ_API_KEY_STT), separate from the LLM
 # key above. Whisper (STT) and the brain (LLM) used to share ONE Groq key —

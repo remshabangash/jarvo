@@ -11,7 +11,7 @@ WhatsApp messages and emails, takes screenshots, records the screen, and
 drives a browser. 100% free stack, no paid APIs.
 
 ```
-🎤 Mic → 📝 Whisper STT (Groq) → 🧠 LLM Brain (Groq, tool-use) → ⚙️ Executor → 🔊 TTS (edge-tts)
+🎤 Mic → 📝 STT (Gemini 3.5 Transcribe → Whisper fallback) → 🧠 LLM Brain (Groq, tool-use) → ⚙️ Executor → 🔊 TTS (edge-tts)
 ```
 
 ## Features
@@ -62,8 +62,12 @@ authentication.
 - **WhatsApp pre-loads in the background at startup** — the first voice
   command doesn't pay the 25–40s web-app cold load (~1–2s re-sends).
 - In-app search opens chats; slow `wa.me` deep-links are the last resort.
-- Whisper misfires (Urdu→Hindi/Arabic) are auto-remapped; misheard
-  WhatsApp/YouTube/Chrome words are post-corrected.
+- **STT: Gemini 3.5 Transcribe primary, Whisper automatic fallback** — Gemini
+  auto-detects Urdu/Pashto/English (85+ languages) and handles desi accents
+  better; any Gemini error instantly retries with Whisper, so a Google outage
+  never stops the assistant. Set `GEMINI_API_KEY` in `.env` to enable
+  (leave empty = Whisper-only). Misheard WhatsApp/YouTube/Chrome words are
+  post-corrected on both engines.
 - LLM: `gpt-oss-20b` primary (fast, reliable tool-JSON), `120b` fallback on
   rate limits. Tool calls carry their own spoken reply — no extra round-trip.
 
@@ -73,7 +77,8 @@ authentication.
 main.py / Server.py / gui.py      ← entry points (voice / web / windowed)
         │
    audio_io.py                    mic capture, ambient calibration, VAD
-   stt.py                         Groq Whisper + language retry + word fixes
+   stt.py                         STT dispatch: Gemini → Whisper fallback
+   stt_gemini.py                  Gemini 3.5 Transcribe (verbatim, vocab hints)
    brain.py                       LLM tool-use, confirmation state machine
    executor.py                    dispatch: tools → workers
    ├── app_resolver/              cross-platform app launching (win/macos/linux)
@@ -83,13 +88,13 @@ main.py / Server.py / gui.py      ← entry points (voice / web / windowed)
    ├── browser_bot.py             controllable browser (click/scroll/type)
    └── chat_store.py              SQLite: sessions, history, activity
 static/index.html                 web UI (auth-aware, history restore)
-tests/                            95 offline tests (mocked LLM, no API keys)
+tests/                            100+ offline tests (mocked LLM, no API keys)
 ```
 
 ## Testing & CI
 
 Every push runs [GitHub Actions CI](.github/workflows/ci.yml):
-**compile checks on all 22 modules + 95 offline unit tests** (brain pipeline
+**compile checks on all 23 modules + 100+ offline unit tests** (brain pipeline
 with a fake Groq client, WhatsApp/email confirmation state machines, OS
 resolvers, STT normalization, SQLite store) — fully mocked, no API keys
 needed. Run locally:
