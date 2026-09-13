@@ -389,7 +389,15 @@ _SCREEN_TOOLS = {"take_screenshot", "start_recording", "stop_recording"}
 
 _UR_HINTS = {"lo", "le", "karo", "kar", "do", "dein", "diya", "di", "liya", "li",
              "meri", "mera", "mere", "ki", "ka", "ke", "se", "ko", "band", "shuru",
-             "wala", "wali"}
+             "wala", "wali",
+             # common Roman-Urdu words that can never be English — short
+             # Roman-Urdu inputs used to fall through to the English voice
+             "kya", "hai", "hain", "ho", "tha", "thi", "hun", "nahi", "nahin",
+             "kahan", "kyun", "kaisa", "kaisi", "aap", "tum", "mujhe", "yeh",
+             "ye", "woh", "wo", "aur", "bohot", "bahut", "theek", "bilkul",
+             "zaroor", "haan", "abhi", "phir", "batao", "koi", "kuch", "dekho",
+             "dikha", "dikhao", "kholo", "chalao", "lagao", "sunao", "gaya",
+             "hogaya", "sakta", "sakte", "sakti"}
 _EN_HINTS = {"take", "the", "an", "my", "can", "you", "of", "please", "capture"}
 
 

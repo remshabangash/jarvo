@@ -1,0 +1,21 @@
+{
+  "_comment": [
+    "Copy this file to contacts.json (it is gitignored) and fill in YOUR real contacts.",
+    "  Windows: copy contacts.example.json contacts.json",
+    "Each entry: display name -> { phone: international format WITHOUT +, e.g. 923001234567,",
+    "aliases: alternate spellings Whisper might mishear (optional) }.",
+    "Keys starting with _ are ignored by the app."
+  ],
+  "Jazz": {
+    "phone": "923001234567",
+    "aliases": ["jazz ka number", "jz"]
+  },
+  "Bhai": {
+    "phone": "923217654321",
+    "aliases": ["bai", "bhai jaan"]
+  },
+  "Ustaad": {
+    "phone": "923451122334",
+    "aliases": ["ustad", "master"]
+  }
+}

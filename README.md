@@ -9,11 +9,19 @@ python -m venv venv
 venv\Scripts\pip install -r requirements.txt
 ```
 
-`.env` mein Groq key:
+`.env` mein Groq key (`.env.example` copy kar ke shuru karein):
 
 ```
 GROQ_API_KEY=gsk_...
 ```
+
+Personal data files (gitignored — repo mein template versions hain):
+
+```bash
+copy contacts.example.json contacts.json          # WhatsApp contacts + numbers
+copy email_contacts.example.json email_contacts.json  # Email contacts
+```
+(In dono files mein apne REAL contacts bhar dein — ye sirf aapke laptop par rehti hain.)
 
 ## Run
 

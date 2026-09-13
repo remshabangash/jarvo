@@ -14,6 +14,7 @@ LIMITATION: like WhatsApp, this needs a real email ADDRESS, not just a
 name. Add contacts to EMAIL_CONTACTS below (name -> email address) so the
 assistant can resolve "email Asif" to an actual inbox.
 """
+import json
 import os
 import smtplib
 import difflib
@@ -27,12 +28,22 @@ SMTP_PORT = 587
 EMAIL_ADDRESS = os.getenv("EMAIL_ADDRESS")
 EMAIL_APP_PASSWORD = os.getenv("EMAIL_APP_PASSWORD")
 
-# name (as you'll say it out loud) -> real email address
-EMAIL_CONTACTS = {
-    "remsha": "bangashremsha0@gmail.com",
-    "remsha0": "bangashremsha0@gmail.com",
-    "bangashremsha0": "bangashremsha0@gmail.com",
-}
+# name (as you'll say it out loud) -> real email address.
+# Loaded from email_contacts.json (gitignored — keeps personal addresses out
+# of the repo). Falls back to a demo example if the file doesn't exist yet.
+_CONTACTS_FILE = os.path.join(os.path.dirname(__file__), "email_contacts.json")
+
+
+def _load_email_contacts() -> dict:
+    try:
+        with open(_CONTACTS_FILE, encoding="utf-8") as f:
+            data = json.load(f)
+        return {k: v for k, v in data.items() if isinstance(v, str) and "@" in v} if isinstance(data, dict) else {}
+    except Exception:
+        return {"friend": "friend@example.com"}
+
+
+EMAIL_CONTACTS = _load_email_contacts()
 
 
 class EmailError(Exception):

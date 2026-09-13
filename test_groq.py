@@ -1,3 +1,9 @@
+import sys
+
+# Windows console (cp1252) crashes on Urdu/Arabic chars — force UTF-8 output.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 from groq import Groq
 from dotenv import load_dotenv
 import os

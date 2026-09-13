@@ -1,0 +1,9 @@
+{
+  "_comment": [
+    "Copy this file to email_contacts.json (it is gitignored) and fill in real addresses.",
+    "  Windows: copy email_contacts.example.json email_contacts.json",
+    "Each entry: spoken name (lowercase) -> email address."
+  ],
+  "remsha": "friend1@example.com",
+  "ali": "friend2@example.com"
+}

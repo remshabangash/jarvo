@@ -40,6 +40,40 @@ from main import detect_script, FALLBACKS
 
 app = Flask(__name__, static_folder="static", static_url_path="")
 
+# Optional shared-secret auth: set SAATHI_TOKEN in .env to require it on
+# every action endpoint (anything that can send WhatsApp/email/etc.).
+# If SAATHI_TOKEN is not set, auth is skipped (same behaviour as before --
+# fine for a laptop-only demo, NOT fine once other devices join the WiFi).
+SAATHI_TOKEN = os.getenv("SAATHI_TOKEN", "").strip()
+
+# Endpoints that stay open even when SAATHI_TOKEN is set (serving the page
+# itself and a cheap liveness check -- neither can trigger an action).
+_PUBLIC_PATHS = {"/", "/api/health"}
+
+
+@app.before_request
+def _check_auth():
+    if not SAATHI_TOKEN:
+        return None  # auth disabled -- no token configured
+    if request.method == "OPTIONS":
+        return None  # let CORS preflight through
+    if request.path in _PUBLIC_PATHS or request.path.startswith("/static"):
+        return None
+    supplied = request.headers.get("X-Auth-Token") or request.args.get("token", "")
+    if supplied != SAATHI_TOKEN:
+        return jsonify({"error": "unauthorized -- missing or wrong token"}), 401
+    return None
+
+
+@app.after_request
+def add_agent_cors(response):
+    """Allow a separately hosted frontend to call this user's local agent."""
+    response.headers.setdefault("Access-Control-Allow-Origin", "*")
+    response.headers.setdefault("Access-Control-Allow-Headers", "Content-Type, X-Auth-Token")
+    response.headers.setdefault("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+    response.headers.setdefault("Access-Control-Allow-Private-Network", "true")
+    return response
+
 history = []  # simple in-memory chat history (single-user demo)
 activity_log = []  # last tool runs, newest last: {"tool", "detail", "ok", "t"}
 
@@ -100,6 +134,11 @@ def _speak_ms(reply: str) -> int:
 @app.route("/")
 def index():
     return send_from_directory("static", "index.html")
+
+
+@app.route("/api/health")
+def api_health():
+    return jsonify({"ok": True, "agent": "saathi", "service": "local"})
 
 
 @app.route("/captures/<path:fname>")
@@ -217,7 +256,8 @@ if __name__ == "__main__":
         pass
 
     try:
-        app.run(host="0.0.0.0", port=port, debug=False)
+        host = os.getenv("SAATHI_HOST", "127.0.0.1")
+        app.run(host=host, port=port, debug=False)
     except OSError as e:
         if "10048" in str(e) or "in use" in str(e).lower() or "address" in str(e).lower():
             print(f"\n❌ Port {port} pehle se use mein hai.")

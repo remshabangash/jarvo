@@ -82,6 +82,11 @@ def record_until_silence(max_wait_for_speech: float = 6.0):
     speech_start_frame = 0  # where speech began (for leading-silence trim)
     onset_streak = 0  # consecutive frames above threshold, before we commit to "speech started"
     ONSET_FRAMES_NEEDED = 2  # ~0.2s sustained — filters clicks/coughs/mic-tap noise
+    # Extra lead-in BEFORE the onset streak, in 100ms frames. A soft opening
+    # sound (a quiet consonant, a trailing breath before the first word) is
+    # often below threshold for a beat before the onset streak registers —
+    # without this the very first word gets clipped at the start.
+    EXTRA_LEADIN_FRAMES = 2
 
     print("🎤 Listening...")
 
@@ -107,8 +112,11 @@ def record_until_silence(max_wait_for_speech: float = 6.0):
                         speech_frames = onset_streak
                         peak_level = level
                         # keep a lead-in before the first spoken frame (covers
-                        # the onset streak itself + a little extra)
-                        speech_start_frame = max(0, processed - onset_streak - 1)
+                        # the onset streak itself + extra padding for a soft
+                        # word-initial sound that started before it registered)
+                        speech_start_frame = max(
+                            0, processed - onset_streak - 1 - EXTRA_LEADIN_FRAMES
+                        )
                         print("🗣  Speech detected...")
                 elif (processed * 0.1) > max_wait_for_speech:
                     print("⏱  No speech detected.")
@@ -120,9 +128,12 @@ def record_until_silence(max_wait_for_speech: float = 6.0):
                     peak_level = level
                 # End-of-turn: silence must be quiet RELATIVE to how loudly the
                 # user speaks. A fixed threshold cut phrases short whenever
-                # the mic gain was low; 40% of the user's own peak level does
-                # not (peaks are ~2-6x the mean speaking level).
-                silence_cut = max(threshold, peak_level * 0.4)
+                # the mic gain was low; a fraction of the user's own peak
+                # level does not (peaks are ~2-6x the mean speaking level).
+                # Kept low (30%, not higher) so a natural trailing-off word
+                # at the end of a sentence isn't mistaken for silence and
+                # doesn't get the sentence cut short mid-word.
+                silence_cut = max(threshold, peak_level * 0.3)
                 if level < silence_cut:
                     silence_after_speech += 0.1
                     if silence_after_speech >= config.SILENCE_SECONDS:
@@ -141,15 +152,19 @@ def record_until_silence(max_wait_for_speech: float = 6.0):
 
     audio = np.concatenate(frames, axis=0)
     # Trim LEADING silence: everything before the user actually started
-    # speaking (plus the 0.2s lead-in) never reaches Whisper — shorter
+    # speaking (plus lead-in padding) never reaches Whisper — shorter
     # uploads, faster transcription, and no risk of the model reacting to
     # room noise instead of the first word.
     lead_trim = speech_start_frame * chunk
     if lead_trim and lead_trim < audio.shape[0]:
         audio = audio[lead_trim:, :]
-    # Trim trailing silence (measured after the last spoken frame)
-    if silence_after_speech > 0:
-        trim = int(silence_after_speech * config.SAMPLE_RATE)
+    # Trim trailing silence (measured after the last spoken frame), but keep
+    # a small safety pad (0.3s) — trimming the FULL measured silence risked
+    # shaving off a soft, trailing-off last word that briefly dipped below
+    # the silence_cut threshold right before the real pause began.
+    TRAIL_SAFETY_SECONDS = 0.3
+    if silence_after_speech > TRAIL_SAFETY_SECONDS:
+        trim = int((silence_after_speech - TRAIL_SAFETY_SECONDS) * config.SAMPLE_RATE)
         if trim < audio.shape[0]:
             audio = audio[:-trim, :]
     print(f"✅ Captured {audio.shape[0] / config.SAMPLE_RATE:.1f}s")
