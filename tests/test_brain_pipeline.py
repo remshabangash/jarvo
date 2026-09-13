@@ -167,11 +167,11 @@ class TestCancelSend:
 class TestEmailStaging:
     def test_email_staged_with_question(self, _patch_client):
         _queue(_patch_client, _FakeResponse(_FakeMessage(tool_calls=[
-            _FakeToolCall("send_email", {"to": "remsha", "subject": "", "body": "",
-                                         "speak": "Remsha ko email bhej doon?"})])))
-        assert brain.think("remsha ko email bhejo") == "Remsha ko email bhej doon?"
+            _FakeToolCall("send_email", {"to": "sara", "subject": "", "body": "",
+                                         "speak": "Sara ko email bhej doon?"})])))
+        assert brain.think("sara ko email bhejo") == "Sara ko email bhej doon?"
         assert brain._pending_whatsapp["kind"] == "email"
-        assert brain._pending_whatsapp["to"] == "remsha"
+        assert brain._pending_whatsapp["to"] == "sara"
 
     def test_email_without_recipient_asks(self, _patch_client):
         _queue(_patch_client, _FakeResponse(_FakeMessage(tool_calls=[

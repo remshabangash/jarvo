@@ -4,11 +4,11 @@ from email_sender import _resolve_email
 
 class TestResolveEmail:
     def test_exact_name(self):
-        result = _resolve_email("remsha")
+        result = _resolve_email("sara")
         assert result is None or "@" in result  # local file may or may not exist
 
     def test_case_insensitive(self):
-        assert _resolve_email("REMSHA".lower()) == _resolve_email("remsha")
+        assert _resolve_email("SARA".lower()) == _resolve_email("sara")
 
     def test_raw_address_passthrough(self):
         assert _resolve_email("someone@example.com") == "someone@example.com"

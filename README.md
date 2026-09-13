@@ -20,7 +20,7 @@ drives a browser. 100% free stack, no paid APIs.
 |---|---|---|
 | 🚀 Open anything | *"Notepad khol do"*, *"Open YouTube"* | Any installed app, UWP/Store app, or website — resolved live from the Start Menu (no fixed command list) |
 | 💬 WhatsApp | *"Ahmed ko hello bhejo"* | Real send through a pre-loaded, persistent WhatsApp Web session with header + send verification |
-| 📧 Email | *"Remsha ko email bhejo"* | Gmail SMTP with contact-name resolution |
+| 📧 Email | *"Sara ko email bhejo"* | Gmail SMTP with contact-name resolution |
 | 🌐 Controlled browser | *"...is par click karo, neeche scroll karo"* | Follow-up commands act on the same Selenium-driven page across turns |
 | 📸 Screen capture | *"screenshot le lo"*, *"recording shuru karo"* | PNG + MP4 (real-time paced), saved to `Pictures/JARVO` |
 | 🗂️ Save contacts by voice | *"Ali ka number save karo 9230..."* | Confirms digits back, then writes WhatsApp/email contacts atomically |

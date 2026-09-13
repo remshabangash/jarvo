@@ -1,3 +1,3 @@
 @echo off
-cd C:\Users\Aamir\OneDrive\Desktop\saathi_assistant
+cd /d "%~dp0"
 venv\Scripts\python.exe Server.py 5000

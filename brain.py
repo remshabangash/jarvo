@@ -86,8 +86,8 @@ EMAIL rules:
 - "subject"/"body": the user's exact words. Body may be empty if they only
   said the recipient so far — the assistant will then ask what to write.
 - "speak" must be a confirmation QUESTION with recipient (and subject/body if
-  known), in the user's language. Example: "Remsha ko 'meeting 5 baje' email
-  bhej doon?" / "Send the email to Remsha?"
+  known), in the user's language. Example: "Sara ko 'meeting 5 baje' email
+  bhej doon?" / "Send the email to Sara?"
 
 BROWSER rules:
 - action='type' needs BOTH "target" (a hint like 'search', 'email', or empty

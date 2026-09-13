@@ -17,7 +17,7 @@ def contacts_env(tmp_path, monkeypatch):
     em_file = tmp_path / "email_contacts.json"
     monkeypatch.setattr(whatsapp_bot, "CONTACTS_FILE", str(wa_file))
     monkeypatch.setattr(email_sender, "_CONTACTS_FILE", str(em_file))
-    monkeypatch.setattr(email_sender, "EMAIL_CONTACTS", {"remsha": "old@example.com"})
+    monkeypatch.setattr(email_sender, "EMAIL_CONTACTS", {"sara": "old@example.com"})
     return {"wa": wa_file, "em": em_file}
 
 

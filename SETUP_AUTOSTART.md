@@ -19,7 +19,7 @@ opens the browser for you.
    - Press `Win + R`, type `shell:startup`, press Enter. A folder opens.
    - Right-click inside that folder → **New → Shortcut**.
    - Browse to and select `run_wake_listener_silent.vbs` in your project
-     folder (e.g. `C:\Users\Aamir\OneDrive\Desktop\saathi_assistant\`).
+     folder (the folder that contains this file).
    - Finish creating the shortcut.
 
 3. **Restart your laptop** to confirm it works from a real cold boot. After
