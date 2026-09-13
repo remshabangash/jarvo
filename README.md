@@ -177,6 +177,17 @@ An explicit agent address can also be forced via a URL query parameter, useful i
 https://your-vercel-url.vercel.app/?agent=http://127.0.0.1:5000
 ```
 
+#### Deploying the frontend to Vercel (already done for this submission)
+
+The frontend is a single static file, so deployment is a two-minute job:
+
+1. Go to [vercel.com/new](https://vercel.com/new) and import this GitHub repository.
+2. Vercel auto-detects `vercel.json`. Set **Output Directory = `static`** (Framework Preset: *Other*).
+3. Click **Deploy** — no build step, no environment variables needed (the frontend holds no secrets).
+4. Open the resulting `https://<project>.vercel.app` — it will show "Start the JARVO agent to begin" until a local agent is running on that machine.
+
+> CLI alternative: `npx vercel --prod` from the repo root after `vercel login`.
+
 ---
 
 ## 6. Setup Instructions for Judges (Run the Local Agent)
