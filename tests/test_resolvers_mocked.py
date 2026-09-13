@@ -75,6 +75,10 @@ class TestWindowsUwpLookup:
         fake = subprocess.CompletedProcess([], 0,
             stdout="Notepad|abc123\nCalculator|xyz789\n", stderr="")
         monkeypatch.setattr(windows.subprocess, "run", lambda *a, **k: fake)
+        # CREATE_NO_WINDOW exists only on Windows — stub it so the call
+        # doesn't raise (and get silently swallowed) on Linux CI runners.
+        monkeypatch.setattr(windows.subprocess, "CREATE_NO_WINDOW", 0,
+                            raising=False)
         windows._UWP_CACHE = None  # force re-scan
         assert windows._uwp_lookup("notepad") == "shell:AppsFolder\\abc123"
         assert windows._uwp_lookup("calculator").endswith("xyz789")
