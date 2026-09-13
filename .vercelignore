@@ -1,0 +1,9 @@
+# Deploy ONLY the static frontend to Vercel — the Python codebase is the
+# LOCAL agent and must never be bundled as a serverless function.
+# Gitignore negation rule: a parent dir must be un-ignored BEFORE files
+# inside it can be re-included (hence !static then static/* then !index).
+*
+!static
+static/*
+!static/index.html
+!vercel.json
