@@ -2,6 +2,12 @@
 
 All network calls are mocked (_post / transcribe_wav_bytes monkeypatched) —
 nothing here ever touches Google or Groq.
+
+Response shapes mirror the LIVE probed API (Sep 2026):
+- text arrives in parts[].audioTranscription.text (transcribe models) —
+  parts[].text accepted too (plain generateContent shape, future-proof).
+- system_instruction is NOT sent: gemini-3.5-transcribe rejects developer
+  instructions with 400 "Developer instruction is not enabled".
 """
 import urllib.error
 
@@ -12,60 +18,53 @@ import stt
 import stt_gemini
 
 
-class TestBuildInstruction:
-    def test_contains_verbatim_rules(self):
-        instr = stt_gemini._build_instruction()
-        assert "EXACT" in instr
-        assert "WhatsApp" in instr
-
-    def test_roman_urdu_mode_uses_latin_letters(self):
-        stt_gemini.ROMAN_URDU_MODE = True
-        try:
-            assert "Latin letters" in stt_gemini._build_instruction()
-        finally:
-            stt_gemini.ROMAN_URDU_MODE = True
-
-    def test_vocab_hint_included(self, monkeypatch):
-        monkeypatch.setattr(stt_gemini, "_VOCAB_HINT", "Ahmed, Sara")
-        assert "Ahmed, Sara" in stt_gemini._build_instruction()
+def _transcribe_response(text, lang_code=None):
+    part = {"audioTranscription": {"text": text}}
+    cand = {"content": {"parts": [part], "role": "model"}, "finishReason": "STOP"}
+    if lang_code:
+        cand["speechResult"] = {"languageCode": lang_code}
+    return {"candidates": [cand]}
 
 
-class TestTranscribeWavBytes:
-    def _fake_response(self):
-        return {
-            "candidates": [
-                {
-                    "content": {"parts": [{"text": "kya hal hai"}]},
-                    "speechResult": {"languageCode": "ur-PK"},
-                }
-            ]
-        }
-
-    def test_success_returns_text_and_lang(self, monkeypatch):
-        monkeypatch.setattr(stt_gemini, "_post", lambda url, body, timeout=30.0: self._fake_response())
-        monkeypatch.setattr(config, "GEMINI_API_KEY", "fake-key")
-        text, lang = stt_gemini.transcribe_wav_bytes(b"fake-wav")
-        assert text == "kya hal hai"
-        assert lang == "ur"
-
-    def test_request_body_shape(self, monkeypatch):
+class TestRequestBody:
+    def test_no_system_instruction_sent(self, monkeypatch):
+        """The transcribe model rejects developer instructions (400) — the
+        request body must contain audio parts only."""
         captured = {}
 
         def fake_post(url, body, timeout=30.0):
             captured["url"] = url
             captured["body"] = body
-            return self._fake_response()
+            return _transcribe_response("hi")
 
         monkeypatch.setattr(stt_gemini, "_post", fake_post)
         monkeypatch.setattr(config, "GEMINI_API_KEY", "fake-key")
         stt_gemini.transcribe_wav_bytes(b"fake-wav")
 
+        assert "system_instruction" not in captured["body"]
         assert "gemini-3.5-transcribe" in captured["url"]
         assert "key=fake-key" in captured["url"]
         inline = captured["body"]["contents"][0]["parts"][0]["inline_data"]
         assert inline["mime_type"].startswith("audio/wav")
         assert inline["data"]  # base64 payload present
-        assert "system_instruction" in captured["body"]
+
+
+class TestTranscribeWavBytes:
+    def test_parses_audio_transcription_field(self, monkeypatch):
+        monkeypatch.setattr(stt_gemini, "_post", lambda url, body, timeout=30.0: _transcribe_response("kya hal hai", "ur-PK"))
+        monkeypatch.setattr(config, "GEMINI_API_KEY", "fake-key")
+        text, lang = stt_gemini.transcribe_wav_bytes(b"fake-wav")
+        assert text == "kya hal hai"
+        assert lang == "ur"
+
+    def test_parses_plain_text_part_too(self, monkeypatch):
+        """Future-proof: plain generateContent parts[].text also accepted."""
+        plain = {"candidates": [{"content": {"parts": [{"text": "hello"}]}}]}
+        monkeypatch.setattr(stt_gemini, "_post", lambda url, body, timeout=30.0: plain)
+        monkeypatch.setattr(config, "GEMINI_API_KEY", "fake-key")
+        text, lang = stt_gemini.transcribe_wav_bytes(b"fake-wav")
+        assert text == "hello"
+        assert lang == "en"  # no language metadata -> informational "en"
 
     def test_no_key_raises(self, monkeypatch):
         monkeypatch.setattr(config, "GEMINI_API_KEY", None)
@@ -91,18 +90,18 @@ class TestTranscribeWavBytes:
             calls["n"] += 1
             if calls["n"] == 1:
                 raise urllib.error.HTTPError("url", 503, "busy", None, None)
-            return self._fake_response()
+            return _transcribe_response("ok")
 
         monkeypatch.setattr(stt_gemini, "_post", fake_post)
         monkeypatch.setattr(stt_gemini.time, "sleep", sleeps.append)
         monkeypatch.setattr(config, "GEMINI_API_KEY", "fake-key")
         text, _ = stt_gemini.transcribe_wav_bytes(b"fake-wav")
-        assert text == "kya hal hai"
+        assert text == "ok"
         assert calls["n"] == 2
         assert len(sleeps) == 1  # one backoff between the two attempts
 
     def test_empty_transcript_raises(self, monkeypatch):
-        empty = {"candidates": [{"content": {"parts": [{"text": ""}]}}]}
+        empty = {"candidates": [{"content": {"parts": [{"audioTranscription": {"text": ""}}]}}]}
         monkeypatch.setattr(stt_gemini, "_post", lambda url, body, timeout=30.0: empty)
         monkeypatch.setattr(config, "GEMINI_API_KEY", "fake-key")
         with pytest.raises(RuntimeError, match="empty"):
@@ -113,13 +112,6 @@ class TestTranscribeWavBytes:
         monkeypatch.setattr(config, "GEMINI_API_KEY", "fake-key")
         with pytest.raises(RuntimeError, match="response shape"):
             stt_gemini.transcribe_wav_bytes(b"fake-wav")
-
-    def test_missing_language_metadata_falls_back_to_en(self, monkeypatch):
-        no_speech = {"candidates": [{"content": {"parts": [{"text": "hello"}]}}]}
-        monkeypatch.setattr(stt_gemini, "_post", lambda url, body, timeout=30.0: no_speech)
-        monkeypatch.setattr(config, "GEMINI_API_KEY", "fake-key")
-        _, lang = stt_gemini.transcribe_wav_bytes(b"fake-wav")
-        assert lang == "en"
 
 
 class TestDispatch:

@@ -2,13 +2,17 @@
 
 Why this exists: Whisper auto-detect often mislabels Urdu/Pashto and garbles
 desi-accented English loanwords. Gemini 3.5 Transcribe auto-detects 85+
-languages, handles accents better, and supports custom vocabulary hints.
+languages and handles accents better (2.6% WER on their benchmarks).
 
-API shape (non-streaming transcription):
-    POST https://generativelanguage.googleapis.com/v1beta/models/
-         {model}:generateContent?key=API_KEY
-    body: inline_data {mime_type "audio/wav;rate=16000", data: base64 wav}
-          + system_instruction telling it to keep the user's EXACT words.
+API notes (probed live against gemini-3.5-transcribe):
+- The model accepts ONLY audio/text parts. `system_instruction` is rejected
+  with 400 "Developer instruction is not enabled for this model". That is
+  fine for us: a transcription-only model has no chat behavior to "clean
+  up" with, so output is verbatim by construction.
+- Transcripts come back in parts[].audioTranscription.text (NOT parts[].text
+  like a regular generateContent response — we support both, future-proof).
+- No language metadata is returned today; voice selection happens later via
+  script detection on the REPLY text, so nothing depends on it.
 
 This module is stdlib-only (urllib + base64) so requirements.txt stays clean.
 
@@ -18,7 +22,6 @@ network/Google outage never takes the assistant down.
 """
 import base64
 import json
-import os
 import time
 import urllib.error
 import urllib.request
@@ -26,42 +29,6 @@ import urllib.request
 import config
 
 API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
-
-# When True, Urdu speech comes back in Latin letters ("kya hal hai") instead
-# of Urdu script — mirrors stt.ROMAN_URDU_MODE so the brain's Roman-Urdu
-# handling behaves identically on both engines.
-ROMAN_URDU_MODE = True
-
-# Custom vocabulary bias: names the user actually has, so "Asif" isn't
-# transcribed as "Asifa". Capped like Whisper's prompt to keep requests small.
-_VOCAB_HINT = ""
-try:
-    with open(os.path.join(os.path.dirname(__file__), "contacts.json"), encoding="utf-8") as _f:
-        _names = [k for k in json.load(_f) if not k.startswith("_")]
-        _VOCAB_HINT = ", ".join(_names)[:200]
-except Exception:
-    pass
-
-
-def _build_instruction() -> str:
-    lang = (
-        "Roman Urdu (Latin letters, NOT Urdu script) or English, as spoken."
-        if ROMAN_URDU_MODE
-        else "Urdu, English or Pashto, exactly as spoken."
-    )
-    instr = (
-        "Transcribe the audio verbatim. Language: " + lang + "\n"
-        "Rules:\n"
-        "1. NEVER clean up, translate or rephrase — keep the speaker's EXACT "
-        "words and word order (fillers included). This is a command assistant; "
-        "changing words changes the command.\n"
-        "2. Keep English loanwords in English: WhatsApp, YouTube, Chrome, "
-        "Notepad, email.\n"
-        "3. Output ONLY the transcript text, no labels or commentary."
-    )
-    if _VOCAB_HINT:
-        instr += "\nKnown contact names (use this exact spelling): " + _VOCAB_HINT
-    return instr
 
 
 def _post(url: str, body: dict, timeout: float = 30.0) -> dict:
@@ -76,7 +43,7 @@ def _post(url: str, body: dict, timeout: float = 30.0) -> dict:
 
 
 def available() -> bool:
-    """True when a Gemini key is configured (import-time _API_KEY check)."""
+    """True when a Gemini key is configured."""
     return bool(getattr(config, "GEMINI_API_KEY", None))
 
 
@@ -91,7 +58,6 @@ def transcribe_wav_bytes(wav: bytes) -> tuple[str, str]:
         raise RuntimeError("GEMINI_API_KEY not set")
 
     body = {
-        "system_instruction": {"parts": [{"text": _build_instruction()}]},
         "contents": [
             {
                 "parts": [
@@ -122,9 +88,18 @@ def transcribe_wav_bytes(wav: bytes) -> tuple[str, str]:
 
     try:
         parts = data["candidates"][0]["content"]["parts"]
-        text = "".join(p.get("text", "") for p in parts).strip()
     except (KeyError, IndexError, TypeError) as e:
         raise RuntimeError(f"unexpected Gemini response shape: {e}") from e
+
+    # Transcribe models put text under parts[].audioTranscription.text;
+    # plain generateContent uses parts[].text. Accept both.
+    text = ""
+    for p in parts:
+        if not isinstance(p, dict):
+            continue
+        chunk = (p.get("audioTranscription") or {}).get("text") or p.get("text") or ""
+        text += chunk
+    text = text.strip()
     if not text:
         raise RuntimeError("Gemini returned an empty transcript")
 
@@ -132,15 +107,16 @@ def transcribe_wav_bytes(wav: bytes) -> tuple[str, str]:
 
 
 def _extract_lang(data: dict) -> str:
-    """Best-effort 2-letter language code from Gemini's response metadata."""
+    """Best-effort 2-letter language code; "en" when absent.
+
+    The transcribe models return no language metadata today — this value is
+    informational only (TTS voice is chosen later from the reply's script).
+    """
     try:
-        # NLS (natural language understanding) result, e.g. "ur-PK", "en-US"
         result = data["candidates"][0].get("speechResult", {}).get("languageCode", "")
         code = result.split("-")[0].lower()
         if code:
             return code
     except (KeyError, AttributeError, TypeError):
         pass
-    # Fall back to the model's own reported thinking language, else "en" —
-    # voice selection happens later via script detection on the reply text.
     return "en"
