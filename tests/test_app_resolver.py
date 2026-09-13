@@ -40,6 +40,15 @@ class TestPlatformSelection:
 
 
 class TestExecutorDelegation:
-    def test_executor_uses_resolver(self):
+    def test_executor_uses_resolver(self, monkeypatch):
+        # Stub the resolver so no real app/browser launch happens on any OS.
         import executor
-        assert executor.open_app("anything") == app_resolver.resolve_and_open("anything")
+        seen = {}
+
+        def fake_resolve(name):
+            seen["name"] = name
+            return f"RESOLVED:{name}"
+
+        monkeypatch.setattr(app_resolver, "resolve_and_open", fake_resolve)
+        assert executor.open_app("anything") == "RESOLVED:anything"
+        assert seen["name"] == "anything"
